@@ -37,6 +37,7 @@
 #include <openthread-types.h>
 #include <cli/cli_server.hpp>
 #include <common/tasklet.hpp>
+#include <openthread-instance.h>
 
 namespace Thread {
 namespace Cli {
@@ -87,7 +88,9 @@ public:
      * @returns The number of bytes placed in the output queue.
      *
      */
-    int OutputFormatV(const char *aFmt, va_list aAp);
+    int OutputBuffer(const char *aBuf, uint16_t aBufLength);
+    int OutputFormatBuffer(const char *fmt, ...);
+    int OutputFormatBufferV(const char *aFmt, va_list aAp);
 
     void ReceiveTask(const uint8_t *aBuf, uint16_t aBufLength);
     void SendDoneTask(void);
@@ -114,6 +117,7 @@ private:
 
     uint16_t mSendLength;
 
+    otInstance *mInstance;
     Interpreter mInterpreter;
 
     friend class Interpreter;

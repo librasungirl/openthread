@@ -75,6 +75,13 @@ typedef struct otInstance
     Thread::Ip6::Ip6 mIp6;
     Thread::ThreadNetif mThreadNetif;
 
+    enum
+    {
+	kRAMBufferSize = 3072,
+    };
+    uint8_t  mRAMBuffer[kRAMBufferSize];
+    uint16_t mRAMBufferOffset;
+
 #if OPENTHREAD_ENABLE_APPLICATION_COAP
     Thread::Coap::Server mApplicationCoapServer;
 #endif // OPENTHREAD_ENABLE_APPLICATION_COAP

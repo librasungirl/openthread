@@ -62,6 +62,7 @@ extern "C" void otCliUartInit(otInstance *aInstance)
 }
 
 Uart::Uart(otInstance *aInstance):
+    mInstance(aInstance),
     mInterpreter(aInstance)
 {
     mRxLength = 0;
@@ -171,6 +172,16 @@ int Uart::Output(const char *aBuf, uint16_t aBufLength)
     return aBufLength;
 }
 
+int Uart::OutputBuffer(const char *aBuf, uint16_t aBufLength)
+{
+    for (int i = 0; i < aBufLength; i++)
+    {
+	mInstance->mRAMBuffer[mInstance->mRAMBufferOffset] = *aBuf++;
+	mInstance->mRAMBufferOffset = (mInstance->mRAMBufferOffset + 1) % sizeof(mInstance->mRAMBuffer);
+    }
+    return aBufLength;
+}
+
 int Uart::OutputFormat(const char *fmt, ...)
 {
     char buf[kMaxLineLength];
@@ -183,13 +194,25 @@ int Uart::OutputFormat(const char *fmt, ...)
     return Output(buf, static_cast<uint16_t>(strlen(buf)));
 }
 
-int Uart::OutputFormatV(const char *aFmt, va_list aAp)
+int Uart::OutputFormatBuffer(const char *fmt, ...)
+{
+    char buf[kMaxLineLength];
+    va_list ap;
+
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+
+    return OutputBuffer(buf, static_cast<uint16_t>(strlen(buf)));
+}
+
+int Uart::OutputFormatBufferV(const char *aFmt, va_list aAp)
 {
     char buf[kMaxLineLength];
 
     vsnprintf(buf, sizeof(buf), aFmt, aAp);
 
-    return Output(buf, static_cast<uint16_t>(strlen(buf)));
+    return OutputBuffer(buf, static_cast<uint16_t>(strlen(buf)));
 }
 
 void Uart::Send(void)
@@ -198,7 +221,7 @@ void Uart::Send(void)
 
     if (mTxLength > kTxBufferSize - mTxHead)
     {
-        mSendLength = kTxBufferSize - mTxHead;
+	mSendLength = kTxBufferSize - mTxHead;
     }
     else
     {
@@ -242,23 +265,23 @@ void otCliLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat,
     switch (aLogLevel)
     {
     case kLogLevelNone:
-        Uart::sUartServer->OutputFormat("NONE ");
+        Uart::sUartServer->OutputFormatBuffer("NONE ");
         break;
 
     case kLogLevelCrit:
-        Uart::sUartServer->OutputFormat("CRIT ");
+        Uart::sUartServer->OutputFormatBuffer("CRIT ");
         break;
 
     case kLogLevelWarn:
-        Uart::sUartServer->OutputFormat("WARN ");
+        Uart::sUartServer->OutputFormatBuffer("WARN ");
         break;
 
     case kLogLevelInfo:
-        Uart::sUartServer->OutputFormat("INFO ");
+        Uart::sUartServer->OutputFormatBuffer("INFO ");
         break;
 
     case kLogLevelDebg:
-        Uart::sUartServer->OutputFormat("DEBG ");
+        Uart::sUartServer->OutputFormatBuffer("DEBG");
         break;
 
     default:
@@ -268,51 +291,51 @@ void otCliLog(otLogLevel aLogLevel, otLogRegion aLogRegion, const char *aFormat,
     switch (aLogRegion)
     {
     case kLogRegionApi:
-        Uart::sUartServer->OutputFormat("API  ");
+        Uart::sUartServer->OutputFormatBuffer("API  ");
         break;
 
     case kLogRegionMle:
-        Uart::sUartServer->OutputFormat("MLE  ");
+        Uart::sUartServer->OutputFormatBuffer("MLE  ");
         break;
 
     case kLogRegionArp:
-        Uart::sUartServer->OutputFormat("ARP  ");
+        Uart::sUartServer->OutputFormatBuffer("ARP  ");
         break;
 
     case kLogRegionNetData:
-        Uart::sUartServer->OutputFormat("NETD ");
+        Uart::sUartServer->OutputFormatBuffer("NETD ");
         break;
 
     case kLogRegionIp6:
-        Uart::sUartServer->OutputFormat("IPV6 ");
+        Uart::sUartServer->OutputFormatBuffer("IPV6 ");
         break;
 
     case kLogRegionIcmp:
-        Uart::sUartServer->OutputFormat("ICMP ");
+        Uart::sUartServer->OutputFormatBuffer("ICMP ");
         break;
 
     case kLogRegionMac:
-        Uart::sUartServer->OutputFormat("MAC  ");
+        Uart::sUartServer->OutputFormatBuffer("MAC: ");
         break;
 
     case kLogRegionMem:
-        Uart::sUartServer->OutputFormat("MEM  ");
+        Uart::sUartServer->OutputFormatBuffer("MEM  ");
         break;
 
     case kLogRegionNcp:
-        Uart::sUartServer->OutputFormat("NCP  ");
+        Uart::sUartServer->OutputFormatBuffer("NCP  ");
         break;
 
     case kLogRegionMeshCoP:
-        Uart::sUartServer->OutputFormat("MCOP ");
+        Uart::sUartServer->OutputFormatBuffer("MCOP ");
         break;
 
     default:
         return;
     }
 
-    Uart::sUartServer->OutputFormatV(aFormat, aAp);
-    Uart::sUartServer->OutputFormat("\r\n");
+    Uart::sUartServer->OutputFormatBufferV(aFormat, aAp);
+    Uart::sUartServer->OutputFormatBuffer(" ||| ");
 }
 #ifdef __cplusplus
 }  // extern "C"
