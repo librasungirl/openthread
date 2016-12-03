@@ -306,7 +306,7 @@
  *
  */
 #ifndef OPENTHREAD_CONFIG_LOG_LEVEL
-#define OPENTHREAD_CONFIG_LOG_LEVEL                             OPENTHREAD_LOG_LEVEL_CRIT
+#define OPENTHREAD_CONFIG_LOG_LEVEL                             OPENTHREAD_LOG_LEVEL_INFO
 #endif  // OPENTHREAD_CONFIG_LOG_LEVEL
 
 /**
@@ -315,7 +315,7 @@
  * Define to enable OpenThread API logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_API
+//#define OPENTHREAD_CONFIG_LOG_API
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_MLE
@@ -323,7 +323,7 @@
  * Define to enable MLE logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_MLE
+//#define OPENTHREAD_CONFIG_LOG_MLE
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_ARP
@@ -331,7 +331,7 @@
  * Define to enable EID-to-RLOC map logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_ARP
+//#define OPENTHREAD_CONFIG_LOG_ARP
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_NETDATA
@@ -339,7 +339,7 @@
  * Define to enable Network Data logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_NETDATA
+//#define OPENTHREAD_CONFIG_LOG_NETDATA
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_ICMP
@@ -347,7 +347,7 @@
  * Define to enable ICMPv6 logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_ICMP
+//#define OPENTHREAD_CONFIG_LOG_ICMP
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_IP6
@@ -363,7 +363,7 @@
  * Define to enable IEEE 802.15.4 MAC logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_MAC
+//#define OPENTHREAD_CONFIG_LOG_MAC
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_MEM
@@ -371,7 +371,7 @@
  * Define to enable memory logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_MEM
+//#define OPENTHREAD_CONFIG_LOG_MEM
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_NETDIAG
@@ -379,7 +379,7 @@
  * Define to enable network diagnostic logging.
  *
  */
-#define OPENTHREAD_CONFIG_LOG_NETDIAG
+//#define OPENTHREAD_CONFIG_LOG_NETDIAG
 
 /**
  * @def OPENTHREAD_CONFIG_LOG_SUFFIX
