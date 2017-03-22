@@ -1664,7 +1664,8 @@ exit:
 void MeshForwarder::SetDiscoverParameters(uint32_t aScanChannels, uint16_t aScanDuration)
 {
     mScanChannels = (aScanChannels == 0) ? static_cast<uint32_t>(Mac::kScanChannelsAll) : aScanChannels;
-    mScanDuration = (aScanDuration == 0) ? static_cast<uint16_t>(Mac::kScanDurationDefault) : aScanDuration;
+    mScanDuration = (aScanDuration < static_cast<uint16_t>(Mac::kScanDurationDefault)) ?
+                    static_cast<uint16_t>(Mac::kScanDurationDefault) : aScanDuration;
 }
 
 void MeshForwarder::HandleDiscoverTimer(void *aContext)
