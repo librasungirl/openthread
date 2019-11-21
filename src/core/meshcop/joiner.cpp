@@ -174,6 +174,11 @@ void Joiner::Finish(otError aError)
         mCallback(aError, mContext);
     }
 
+    if (aError == OT_ERROR_NONE && (Get<Mac::Mac>().GetPanId() != Mac::kPanIdBroadcast))
+    {
+        Get<Mle::MleRouter>().Start(/* aAnnounceAttach */ false);
+    }
+
 exit:
     return;
 }

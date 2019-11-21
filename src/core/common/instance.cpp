@@ -174,12 +174,18 @@ void Instance::AfterInit(void)
     // Restore datasets and network information
 
     Get<Settings>().Init();
-    Get<Mle::MleRouter>().Restore();
+    Get<Settings>().Wipe();
+    //    Get<Mle::MleRouter>().Restore();
 
 #endif // OPENTHREAD_MTD || OPENTHREAD_FTD
 
 #if OPENTHREAD_ENABLE_VENDOR_EXTENSION
     Get<Extension::ExtensionBase>().SignalInstanceInit();
+#endif
+#if OPENTHREAD_MTD || OPENTHREAD_FTD
+    Get<ThreadNetif>().Up();
+    Get<MeshCoP::Joiner>().Start("123456", NULL, PACKAGE_NAME, OPENTHREAD_CONFIG_PLATFORM_INFO, PACKAGE_VERSION, NULL,
+                                 NULL, this);
 #endif
 }
 
