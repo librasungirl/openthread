@@ -128,6 +128,7 @@ NORDICSEMI_COMMON_SOURCES                                                       
     nrfx/drivers/src/nrfx_power.c                                                                                         \
     nrfx/drivers/src/nrfx_spis.c                                                                                          \
     nrfx/drivers/src/nrfx_systick.c                                                                                       \
+    nrfx/drivers/src/nrfx_gpiote.c                                                                                       \
     nrfx/hal/nrf_nvmc.c                                                                                                   \
     nrfx/soc/nrfx_atomic.c                                                                                                \
     $(NULL)

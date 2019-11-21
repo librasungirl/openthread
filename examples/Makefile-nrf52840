@@ -159,6 +159,10 @@ endif # USB     == 1
 endif # NCP_SPI == 1
 endif # DISABLE_TRANSPORTS
 
+# Defined in third_party/NordicSemiconductor/nrfx/templates/nRF52840/nrfx_config.h
+COMMONCFLAGS += -DNRFX_GPIOTE_ENABLED=1
+COMMONCFLAGS += -DNRFX_GPIOTE_CONFIG_IRQ_PRIORITY=7
+COMMONCFLAGS += -DNRFX_GPIOTE_CONFIG_NUM_OF_LOW_POWER_EVENTS=5
 ifeq ($(shell expr $(GCCVersion) \>= 7), 1)
     COMMONCFLAGS += -Wno-expansion-to-defined
 endif

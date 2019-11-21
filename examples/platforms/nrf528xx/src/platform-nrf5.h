@@ -201,6 +201,8 @@ uint32_t nrf5FlashWrite(uint32_t aAddress, const uint8_t *aData, uint32_t aSize)
  *
  */
 void nrf5TempInit(void);
+void nrf5GpioInit(void);
+void nrf5GpioDeInit(void);
 
 /**
  * Deinitialization of temperature controller.

@@ -86,6 +86,7 @@ PLATFORM_COMMON_SOURCES                                                         
     src/entropy.c                                                                                            \
     src/fem.c                                                                                                \
     src/flash.c                                                                                              \
+    src/gpio.c                                                                                               \
     src/logging.c                                                                                            \
     src/misc.c                                                                                               \
     src/radio.c                                                                                              \

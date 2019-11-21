@@ -77,7 +77,8 @@ MleRouter::MleRouter(Instance &aInstance)
     , mPreviousPartitionId(0)
     , mPreviousPartitionRouterIdSequence(0)
     , mPreviousPartitionIdTimeout(0)
-    , mRouterSelectionJitter(kRouterSelectionJitter)
+    //, mRouterSelectionJitter(kRouterSelectionJitter)
+    , mRouterSelectionJitter(30) // DEMO purpose
     , mRouterSelectionJitterTimeout(0)
     , mParentPriority(kParentPriorityUnspecified)
 {

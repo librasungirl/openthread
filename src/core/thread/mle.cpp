@@ -33,6 +33,7 @@
 
 #include "mle.hpp"
 
+#include <openthread/platform/gpio.h>
 #include <openthread/platform/radio.h>
 #include <openthread/platform/time.h>
 
@@ -1502,6 +1503,36 @@ void Mle::HandleStateChanged(otChangedFlags aFlags)
             mAddressRegistrationMode = kAppendAllAddresses;
             mChildUpdateRequestState = kChildUpdateRequestPending;
             ScheduleMessageTransmissionTimer();
+        }
+
+        switch (mRole)
+        {
+        case OT_DEVICE_ROLE_DISABLED:
+        case OT_DEVICE_ROLE_DETACHED:
+            break;
+        case OT_DEVICE_ROLE_CHILD:
+            otPlatGpioClearAll();
+            otPlatGpioSet(0, LED2_GREEN_PIN);
+            break;
+        case OT_DEVICE_ROLE_ROUTER:
+            otPlatGpioClearAll();
+            otPlatGpioSet(0, LED2_BLUE_PIN);
+            break;
+        case OT_DEVICE_ROLE_LEADER:
+            otPlatGpioClearAll();
+            otPlatGpioSet(0, LED2_RED_PIN);
+            break;
+        }
+
+        if (IsAttached())
+        {
+            // LED1 ON
+            otPlatGpioClear(0, LED1_PIN);
+        }
+        else
+        {
+            // LED1 OFF
+            otPlatGpioSet(0, LED1_PIN);
         }
     }
 

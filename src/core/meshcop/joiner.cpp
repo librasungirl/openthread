@@ -33,6 +33,8 @@
 
 #include "joiner.hpp"
 
+#include <openthread/platform/gpio.h>
+
 #include <stdio.h>
 
 #include "common/code_utils.hpp"
@@ -176,7 +178,14 @@ void Joiner::Finish(otError aError)
 
     if (aError == OT_ERROR_NONE && (Get<Mac::Mac>().GetPanId() != Mac::kPanIdBroadcast))
     {
+        // LED1 ON
+        otPlatGpioSet(0, LED1_PIN);
         Get<Mle::MleRouter>().Start(/* aAnnounceAttach */ false);
+    }
+    else
+    {
+        // LED1 OFF
+        otPlatGpioClear(0, LED1_PIN);
     }
 
 exit:

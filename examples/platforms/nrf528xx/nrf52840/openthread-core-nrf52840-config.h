@@ -256,6 +256,14 @@
 #define OPENTHREAD_CONFIG_MAC_HEADER_IE_SUPPORT 1
 #endif
 
+/** PINS for dongle */
+#define LED_GPIO_PORT 0x50000300UL // not take effect
+#define SW1_PIN 38                 // P1.06 for dongle
+#define LED1_PIN 6                 // P0.06
+#define LED2_RED_PIN 8             // P0.08
+#define LED2_GREEN_PIN 41          // P1.09
+#define LED2_BLUE_PIN 12           // P0.12
+
 /*
  * Suppress the ARMCC warning on unreachable statement,
  * e.g. break after assert(false) or ExitNow() macro.

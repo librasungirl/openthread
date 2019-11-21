@@ -34,6 +34,7 @@ ot_platform_headers                     = \
     ble.h                                 \
     diag.h                                \
     entropy.h                             \
+    gpio.h                                \
     memory.h                              \
     misc.h                                \
     logging.h                             \

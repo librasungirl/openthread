@@ -114,6 +114,7 @@ void otSysInit(int argc, char *argv[])
     nrf5MiscInit();
     nrf5RadioInit();
     nrf5TempInit();
+    nrf5GpioInit();
 
 #if PLATFORM_FEM_ENABLE_DEFAULT_CONFIG
     PlatformFemSetConfigParams(&PLATFORM_FEM_DEFAULT_CONFIG);
@@ -149,6 +150,7 @@ void otSysDeinit(void)
 #if !OPENTHREAD_CONFIG_ENABLE_BUILTIN_MBEDTLS && PLATFORM_OPENTHREAD_VANILLA
     mbedtls_platform_teardown(NULL);
 #endif
+    nrf5GpioDeInit();
 }
 
 bool otSysPseudoResetWasRequested(void)
