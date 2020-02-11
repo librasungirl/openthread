@@ -1,6 +1,5 @@
 # Auto normalize all files which appear to be text files.
 *        text=auto
-
 # Auto normalize files which are explicitly text
 *.[ch]   text
 *.[ch]pp text
@@ -9,7 +8,6 @@
 *.yml    text
 *.html   text
 *.py     text
-
 # Files which are explicitly binary
 *.gz     binary !eol
 *.xz     binary !eol
@@ -18,7 +16,6 @@
 *.png    binary !eol
 *.jpg    binary !eol
 *.gif    binary !eol
-
 # Files normalized to always keep Unix line endings
 .default-version  eol=lf
 bootstrap*        eol=lf
@@ -36,3 +33,4 @@ configure.ac      eol=lf
 Makefile.am       eol=lf
 Makefile.in       eol=lf
 Makefile          eol=lf
+*.a filter=lfs diff=lfs merge=lfs -text
