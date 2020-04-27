@@ -89,9 +89,31 @@ public:
      */
     const Ip6::Address &GetDomainUnicastAddress(void) const { return mDomainUnicastAddress.GetAddress(); }
 
+    /**
+     * This method sets/clears the Interface Identifier manually specified for the Thread Domain Unicast Address.
+     *
+     * @param[in]  aIid        A pointer to the Interface Identifier to set or NULL to clear.
+     *
+     * @retval OT_ERROR_NONE           Successfully set/cleared the Interface Identifier.
+     * @retval OT_ERROR_INVALID_ARGS   The specified Interface Identifier is reserved.
+     *
+     */
+    otError SetFixedDuaInterfaceIdentifier(const Ip6::InterfaceIdentifier *aIid);
+
+    /**
+     * This method gets the Interface Identifier manually specified for the Thread Domain Unicast Address.
+     *
+     * @returns A pointer to the Interface Identifier which was set manually, or
+     *          NULL if none was set.
+     */
+    const Ip6::InterfaceIdentifier *GetFixedDuaInterfaceIdentifier(void) const;
+
 private:
+    otError GenerateDomainUnicastAddressIid(void);
+
     Ip6::NetifUnicastAddress mDomainUnicastAddress;
     uint8_t                  mDadCounter;
+    Ip6::InterfaceIdentifier mFixedDuaInterfaceIdentifier;
 };
 
 } // namespace ot
