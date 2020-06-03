@@ -237,16 +237,6 @@ bool Address::HasIid(const uint8_t *aIid) const
     return (memcmp(mFields.m8 + kInterfaceIdentifierOffset, aIid, kInterfaceIdentifierSize) == 0);
 }
 
-bool Address::HasIid(const InterfaceIdentifier &aIid) const
-{
-    return HasIid(aIid.m8);
-}
-
-void Address::SetIid(const InterfaceIdentifier &aIid)
-{
-    SetIid(aIid.m8);
-}
-
 void Address::SetIid(const uint8_t *aIid)
 {
     memcpy(mFields.m8 + kInterfaceIdentifierOffset, aIid, kInterfaceIdentifierSize);

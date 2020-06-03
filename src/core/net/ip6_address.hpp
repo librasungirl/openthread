@@ -62,7 +62,9 @@ namespace Ip6 {
  *
  */
 OT_TOOL_PACKED_BEGIN
-class InterfaceIdentifier : public otIp6InterfaceIdentifier
+class InterfaceIdentifier : public otIp6InterfaceIdentifier,
+                            public Equatable<InterfaceIdentifier>,
+                            public Clearable<InterfaceIdentifier>
 {
 public:
     enum
@@ -75,34 +77,6 @@ public:
      *
      */
     typedef String<kInfoStringSize> InfoString;
-
-    /**
-     * This method clears the Interface Identifier (sets all bytes to zero).
-     *
-     */
-    void Clear(void) { memset(m8, 0, sizeof(InterfaceIdentifier)); }
-
-    /**
-     * This method evaluates whether or not the Interface Identifiers match.
-     *
-     * @param[in]  aOther  The Interface Identifier to compare.
-     *
-     * @retval true   If the Interface Identifiers match.
-     * @retval false  If the Interface Identifiers do not match.
-     *
-     */
-    bool operator==(const InterfaceIdentifier &aOther) const;
-
-    /**
-     * This method evaluates whether or not the Interface Identifiers match.
-     *
-     * @param[in]  aOther  The Interface Identifier to compare.
-     *
-     * @retval true If the Interface Identifiers do not match.
-     * @retval false If the Interface Identifiers match.
-     *
-     */
-    bool operator!=(const InterfaceIdentifier &aOther) const { return !(*this == aOther); }
 
     /**
      * This method indicates whether or not the Interface Identifier is unspecified.
@@ -545,7 +519,7 @@ public:
      * @retval false if the IPv6 address doesn't have the specified Interface Identifier.
      *
      */
-    bool HasIid(const InterfaceIdentifier &aIid) const;
+    bool HasIid(const InterfaceIdentifier &aIid) const { return HasIid(aIid.m8); }
 
     /**
      * This method sets the Interface Identifier.
@@ -561,7 +535,7 @@ public:
      * @param[in]  aIid  A reference to the Interface Identifier.
      *
      */
-    void SetIid(const InterfaceIdentifier &aIid);
+    void SetIid(const InterfaceIdentifier &aIid) { SetIid(aIid.m8); }
 
     /**
      * This method sets the Interface Identifier.

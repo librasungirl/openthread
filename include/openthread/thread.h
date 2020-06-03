@@ -527,8 +527,7 @@ otError otThreadSetFixedDuaInterfaceIdentifier(otInstance *aInstance, const otIp
  *
  * @param[in]  aInstance A pointer to an OpenThread instance.
  *
- * @returns A pointer to the Interface Identifier which was set manually, or
- *          NULL if none was set.
+ * @returns A pointer to the Interface Identifier which was set manually, or NULL if none was set.
  *
  * @sa otThreadSetFixedDuaInterfaceIdentifier
  *

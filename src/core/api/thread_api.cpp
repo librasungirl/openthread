@@ -225,16 +225,32 @@ exit:
 otError otThreadSetFixedDuaInterfaceIdentifier(otInstance *aInstance, const otIp6InterfaceIdentifier *aIid)
 {
     Instance &instance = *static_cast<Instance *>(aInstance);
+    otError   error    = OT_ERROR_NONE;
 
-    return instance.Get<DuaManager>().SetFixedDuaInterfaceIdentifier(
-        static_cast<const Ip6::InterfaceIdentifier *>(aIid));
+    if (aIid)
+    {
+        error = instance.Get<DuaManager>().SetFixedDuaInterfaceIdentifier(
+            *static_cast<const Ip6::InterfaceIdentifier *>(aIid));
+    }
+    else
+    {
+        instance.Get<DuaManager>().ClearFixedDuaInterfaceIdentifier();
+    }
+
+    return error;
 }
 
 const otIp6InterfaceIdentifier *otThreadGetFixedDuaInterfaceIdentifier(otInstance *aInstance)
 {
-    Instance &instance = *static_cast<Instance *>(aInstance);
+    Instance &                      instance = *static_cast<Instance *>(aInstance);
+    const otIp6InterfaceIdentifier *iid      = NULL;
 
-    return instance.Get<DuaManager>().GetFixedDuaInterfaceIdentifier();
+    if (instance.Get<DuaManager>().IsFixedDuaInterfaceIdentifierSet())
+    {
+        iid = &instance.Get<DuaManager>().GetFixedDuaInterfaceIdentifier();
+    }
+
+    return iid;
 }
 #endif // OPENTHREAD_CONFIG_DUA_ENABLE
 
