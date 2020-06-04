@@ -110,8 +110,8 @@ public:
      * This method indicates whether or not there is Interface Identifier manually specified for the Thread
      * Domain Unicast Address.
      *
-     * @retval true  if there is Interface Identifier manually specified.
-     * @retval false if there is no Interface Identifier manually specified.
+     * @retval true  If there is Interface Identifier manually specified.
+     * @retval false If there is no Interface Identifier manually specified.
      *
      */
     bool IsFixedDuaInterfaceIdentifierSet(void) { return !mFixedDuaInterfaceIdentifier.IsUnspecified(); }

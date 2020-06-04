@@ -504,8 +504,8 @@ public:
      *
      * @param[in]  aIid  A pointer to the Interface Identifier.
      *
-     * @retval true if the IPv6 address has the specified Interface Identifier.
-     * @retval false if the IPv6 address doesn't have the specified Interface Identifier.
+     * @retval true  If the IPv6 address has the specified Interface Identifier.
+     * @retval false If the IPv6 address doesn't have the specified Interface Identifier.
      *
      */
     bool HasIid(const uint8_t *aIid) const;
@@ -515,8 +515,8 @@ public:
      *
      * @param[in]  aIid  A reference to the Interface Identifier.
      *
-     * @retval true if the IPv6 address has the specified Interface Identifier.
-     * @retval false if the IPv6 address doesn't have the specified Interface Identifier.
+     * @retval true  If the IPv6 address has the specified Interface Identifier.
+     * @retval false If the IPv6 address doesn't have the specified Interface Identifier.
      *
      */
     bool HasIid(const InterfaceIdentifier &aIid) const { return HasIid(aIid.m8); }
