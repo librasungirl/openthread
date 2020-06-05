@@ -263,7 +263,7 @@ class TestDomainUnicastAddress(thread_cert.TestCase):
                                       domain_prefix_cid)
 
         # 5) Change BBR_1 from config.DOMAIN_PREFIX to config.DOMAIN_PRFIX_ALTER. Verify that MED_1_2
-        #   generate a new Interface Identifier different from the one generated in 4d) due to the
+        #   generates a new Interface Identifier different from the one generated in 4d) due to the
         #   Domain Prefix change.
         context_id += 1
         self.simulator.set_lowpan_context(context_id,
@@ -319,7 +319,7 @@ class TestDomainUnicastAddress(thread_cert.TestCase):
         self.__check_dua_registration(MED_1_2, med_1_2_dua_iid,
                                       domain_prefix_cid)
 
-        #8) Bring up SED_1_2, verify it generates one DUA, and registers it to its parent, though the parent
+        #8) Bring up SED_1_2, verify that it generates one DUA, and registers it to its parent, though the parent
         #   is a Thread 1.1 device.
         self.nodes[SED_1_2].set_pollperiod(SED_POLL_PERIOD)
         self.nodes[SED_1_2].start()
