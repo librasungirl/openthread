@@ -203,6 +203,21 @@ private:
     void    ProcessHelp(uint8_t aArgsLength, char *aArgs[]);
     void    ProcessBufferInfo(uint8_t aArgsLength, char *aArgs[]);
     void    ProcessChannel(uint8_t aArgsLength, char *aArgs[]);
+#if (OPENTHREAD_CONFIG_THREAD_VERSION >= OT_THREAD_VERSION_1_2)
+    void ProcessBackboneRouter(uint8_t aArgsLength, char *aArgs[]);
+
+#if OPENTHREAD_FTD && OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
+    otError ProcessBackboneRouterLocal(uint8_t aArgsLength, char *aArgs[]);
+#endif
+
+    void ProcessDomainName(uint8_t aArgsLength, char *aArgs[]);
+
+#if OPENTHREAD_CONFIG_DUA_ENABLE
+    void ProcessDua(uint8_t aArgsLength, char *aArgs[]);
+#endif
+
+#endif // (OPENTHREAD_CONFIG_THREAD_VERSION >= OT_THREAD_VERSION_1_2)
+
 #if OPENTHREAD_FTD
     void ProcessChild(uint8_t aArgsLength, char *aArgs[]);
     void ProcessChildIp(uint8_t aArgsLength, char *aArgs[]);
@@ -242,9 +257,7 @@ private:
 #if OPENTHREAD_POSIX
     void ProcessExit(uint8_t aArgsLength, char *aArgs[]);
 #endif
-#if (OPENTHREAD_CONFIG_LOG_OUTPUT == OPENTHREAD_CONFIG_LOG_OUTPUT_DEBUG_UART) && OPENTHREAD_POSIX
-    void ProcessLogFilename(uint8_t aArgsLength, char *aArgs[]);
-#endif
+    void    ProcessLog(uint8_t aArgsLength, char *aArgs[]);
     void    ProcessExtAddress(uint8_t aArgsLength, char *aArgs[]);
     void    ProcessExtPanId(uint8_t aArgsLength, char *aArgs[]);
     void    ProcessFactoryReset(uint8_t aArgsLength, char *aArgs[]);
@@ -277,6 +290,9 @@ private:
     void ProcessNetworkDataRegister(uint8_t aArgsLength, char *aArgs[]);
 #endif
     void ProcessNetworkDataShow(uint8_t aArgsLength, char *aArgs[]);
+#if OPENTHREAD_CONFIG_PLATFORM_NETIF_ENABLE
+    void ProcessNetif(uint8_t aArgsLength, char *aArgs[]);
+#endif
 #if OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_ENABLE
     void ProcessService(uint8_t aArgsLength, char *aArgs[]);
 #endif
@@ -297,11 +313,21 @@ private:
 #endif
     void ProcessPing(uint8_t aArgsLength, char *aArgs[]);
     void ProcessPollPeriod(uint8_t aArgsLength, char *aArgs[]);
+    void SignalPingRequest(const Ip6::Address &aPeerAddress,
+                           uint16_t            aPingLength,
+                           uint32_t            aTimestamp,
+                           uint8_t             aHopLimit);
+    void SignalPingReply(const Ip6::Address &aPeerAddress,
+                         uint16_t            aPingLength,
+                         uint32_t            aTimestamp,
+                         uint8_t             aHopLimit);
+
 #if OPENTHREAD_CONFIG_BORDER_ROUTER_ENABLE
     void    ProcessPrefix(uint8_t aArgsLength, char *aArgs[]);
     otError ProcessPrefixAdd(uint8_t aArgsLength, char *aArgs[]);
     otError ProcessPrefixRemove(uint8_t aArgsLength, char *aArgs[]);
     otError ProcessPrefixList(void);
+    void    OutputPrefix(otBorderRouterConfig &aConfig);
 #endif
     void ProcessPromiscuous(uint8_t aArgsLength, char *aArgs[]);
 #if OPENTHREAD_FTD
@@ -352,7 +378,19 @@ private:
     static void HandleActiveScanResult(otActiveScanResult *aResult, void *aContext);
     static void HandleEnergyScanResult(otEnergyScanResult *aResult, void *aContext);
     static void HandleLinkPcapReceive(const otRadioFrame *aFrame, bool aIsTx, void *aContext);
+
+#if OPENTHREAD_FTD || OPENTHREAD_CONFIG_TMF_NETWORK_DIAG_MTD_ENABLE
+    void        HandleDiagnosticGetResponse(const otMessage &aMessage, const Ip6::MessageInfo &aMessageInfo);
     static void HandleDiagnosticGetResponse(otMessage *aMessage, const otMessageInfo *aMessageInfo, void *aContext);
+    void        OutputSpaces(uint16_t aCount);
+    void        OutputMode(const otLinkModeConfig &aMode, uint16_t aColumn);
+    void        OutputConnectivity(const otNetworkDiagConnectivity &aConnectivity, uint16_t aColumn);
+    void        OutputRoute(const otNetworkDiagRoute &aRoute, uint16_t aColumn);
+    void        OutputRouteData(const otNetworkDiagRouteData &aRouteData, uint16_t aColumn);
+    void        OutputLeaderData(const otLeaderData &aLeaderData, uint16_t aColumn);
+    void        OutputNetworkDiagMacCounters(const otNetworkDiagMacCounters &aMacCounters, uint16_t aColumn);
+    void        OutputChildTableEntry(const otNetworkDiagChildEntry &aChildEntry, uint16_t aColumn);
+#endif // OPENTHREAD_FTD || OPENTHREAD_CONFIG_TMF_NETWORK_DIAG_MTD_ENABLE
 
 #if OPENTHREAD_CONFIG_DNS_CLIENT_ENABLE
     static void HandleDnsResponse(void *              aContext,
@@ -371,7 +409,6 @@ private:
     void HandleActiveScanResult(otActiveScanResult *aResult);
     void HandleEnergyScanResult(otEnergyScanResult *aResult);
     void HandleLinkPcapReceive(const otRadioFrame *aFrame, bool aIsTx);
-    void HandleDiagnosticGetResponse(Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 #if OPENTHREAD_CONFIG_DNS_CLIENT_ENABLE
     void HandleDnsResponse(const char *aHostname, const Ip6::Address *aAddress, uint32_t aTtl, otError aResult);
 #endif

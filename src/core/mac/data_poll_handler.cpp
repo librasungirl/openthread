@@ -130,12 +130,12 @@ void DataPollHandler::HandleDataPoll(Mac::RxFrame &aFrame)
     Child *      child;
     uint16_t     indirectMsgCount;
 
-    VerifyOrExit(aFrame.GetSecurityEnabled());
-    VerifyOrExit(Get<Mle::MleRouter>().GetRole() != OT_DEVICE_ROLE_DETACHED);
+    VerifyOrExit(aFrame.GetSecurityEnabled(), OT_NOOP);
+    VerifyOrExit(!Get<Mle::MleRouter>().IsDetached(), OT_NOOP);
 
     SuccessOrExit(aFrame.GetSrcAddr(macSource));
     child = Get<ChildTable>().FindChild(macSource, Child::kInStateValidOrRestoring);
-    VerifyOrExit(child != NULL);
+    VerifyOrExit(child != NULL, OT_NOOP);
 
     child->SetLastHeard(TimerMilli::GetNow());
     child->ResetLinkFailures();
@@ -204,7 +204,7 @@ void DataPollHandler::HandleSentFrame(const Mac::TxFrame &aFrame, otError aError
 {
     Child *child = mIndirectTxChild;
 
-    VerifyOrExit(child != NULL);
+    VerifyOrExit(child != NULL, OT_NOOP);
 
     mIndirectTxChild = NULL;
     HandleSentFrame(aFrame, aError, *child);
@@ -263,10 +263,10 @@ void DataPollHandler::HandleSentFrame(const Mac::TxFrame &aFrame, otError aError
                 uint32_t frameCounter;
                 uint8_t  keyId;
 
-                aFrame.GetFrameCounter(frameCounter);
+                IgnoreError(aFrame.GetFrameCounter(frameCounter));
                 aChild.SetIndirectFrameCounter(frameCounter);
 
-                aFrame.GetKeyId(keyId);
+                IgnoreError(aFrame.GetKeyId(keyId));
                 aChild.SetIndirectKeyId(keyId);
             }
 
@@ -278,7 +278,7 @@ void DataPollHandler::HandleSentFrame(const Mac::TxFrame &aFrame, otError aError
 
     default:
         OT_ASSERT(false);
-        break;
+        OT_UNREACHABLE_CODE(break);
     }
 
     mCallbacks.HandleSentFrameToChild(aFrame, mFrameContext, aError, aChild);

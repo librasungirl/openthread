@@ -81,3 +81,15 @@
 #ifndef OPENTHREAD_CONFIG_NCP_SPI_ENABLE
 #define OPENTHREAD_CONFIG_NCP_SPI_ENABLE 0
 #endif
+
+/**
+ * Check OTNS configurations
+ *
+ */
+#if OPENTHREAD_CONFIG_OTNS_ENABLE
+
+#if !OPENTHREAD_SIMULATION_VIRTUAL_TIME
+#error "OTNS requires virtual time simulations"
+#endif
+
+#endif // OPENTHREAD_CONFIG_OTNS_ENABLE

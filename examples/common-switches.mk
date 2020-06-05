@@ -28,6 +28,7 @@
 
 # OpenThread Features (Makefile default configuration).
 
+BACKBONE_ROUTER     ?= 0
 BIG_ENDIAN          ?= 0
 BORDER_AGENT        ?= 0
 BORDER_ROUTER       ?= 0
@@ -46,6 +47,7 @@ DIAGNOSTIC          ?= 0
 DISABLE_DOC         ?= 0
 DISABLE_TOOLS       ?= 0
 DNS_CLIENT          ?= 0
+DUA                 ?= 0
 DYNAMIC_LOG_LEVEL   ?= 0
 ECDSA               ?= 0
 EXTERNAL_HEAP       ?= 0
@@ -58,7 +60,10 @@ LOG_OUTPUT          ?= APP
 endif
 LINK_RAW            ?= 0
 MAC_FILTER          ?= 0
+MLE_LONG_ROUTES     ?= 0
 MTD_NETDIAG         ?= 0
+MULTIPLE_INSTANCE   ?= 0
+OTNS                ?= 0
 PLATFORM_UDP        ?= 0
 REFERENCE_DEVICE    ?= 0
 SERVICE             ?= 0
@@ -70,6 +75,10 @@ THREAD_VERSION      ?= 1.1
 TIME_SYNC           ?= 0
 UDP_FORWARD         ?= 0
 
+
+ifeq ($(BACKBONE_ROUTER),1)
+COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE=1
+endif
 
 ifeq ($(BIG_ENDIAN),1)
 COMMONCFLAGS                   += -DBYTE_ORDER_BIG_ENDIAN=1
@@ -115,6 +124,10 @@ ifeq ($(CHILD_SUPERVISION),1)
 COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_CHILD_SUPERVISION_ENABLE=1
 endif
 
+ifeq ($(CSL_RECEIVER),1)
+COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_MAC_CSL_RECEIVER_ENABLE=1
+endif
+
 ifeq ($(DEBUG),1)
 configure_OPTIONS              += --enable-debug --disable-optimization
 endif
@@ -141,6 +154,10 @@ endif
 
 ifeq ($(DNS_CLIENT),1)
 COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_DNS_CLIENT_ENABLE=1
+endif
+
+ifeq ($(DUA),1)
+COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_DUA_ENABLE=1
 endif
 
 ifeq ($(DYNAMIC_LOG_LEVEL),1)
@@ -183,8 +200,17 @@ ifeq ($(MAC_FILTER),1)
 COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_MAC_FILTER_ENABLE=1
 endif
 
+# Enable MLE long routes extension (experimental, breaks Thread conformance)
+ifeq ($(MLE_LONG_ROUTES),1)
+COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_MLE_LONG_ROUTES_ENABLE=1
+endif
+
 ifeq ($(MTD_NETDIAG),1)
 COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_TMF_NETWORK_DIAG_MTD_ENABLE=1
+endif
+
+ifeq ($(MULTIPLE_INSTANCE),1)
+COMMONCFLAGS                   += -DOPENTHREAD_CONFIG_MULTIPLE_INSTANCE_ENABLE=1
 endif
 
 ifeq ($(PLATFORM_UDP),1)
@@ -248,11 +274,16 @@ ifeq ($(SETTINGS_RAM),1)
 COMMONCFLAGS += -DOPENTHREAD_SETTINGS_RAM=1
 endif
 
+ifeq ($(OTNS),1)
+COMMONCFLAGS += -DOPENTHREAD_CONFIG_OTNS_ENABLE=1
+endif
+
 ifeq ($(FULL_LOGS),1)
 # HINT: Add more here, or comment out ones you do not need/want
 LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_LEVEL=OT_LOG_LEVEL_DEBG
 LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_API=1
 LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_ARP=1
+LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_BBR=1
 LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_CLI=1
 LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_COAP=1
 LOG_FLAGS += -DOPENTHREAD_CONFIG_LOG_ICMP=1

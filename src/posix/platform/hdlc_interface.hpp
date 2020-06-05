@@ -36,13 +36,13 @@
 
 #include "openthread-posix-config.h"
 #include "platform-posix.h"
-#include "spinel_interface.hpp"
 #include "lib/hdlc/hdlc.hpp"
+#include "lib/spinel/spinel_interface.hpp"
 
-#if OPENTHREAD_POSIX_CONFIG_RCP_UART_ENABLE
+#if OPENTHREAD_POSIX_CONFIG_RCP_BUS == OT_POSIX_RCP_BUS_UART
 
 namespace ot {
-namespace PosixApp {
+namespace Posix {
 
 /**
  * This class defines an HDLC interface to the Radio Co-processor (RCP)
@@ -54,11 +54,14 @@ public:
     /**
      * This constructor initializes the object.
      *
-     * @param[in] aCallback     A reference to a `Callback` object.
-     * @param[in] aFrameBuffer  A reference to a `RxFrameBuffer` object.
+     * @param[in] aCallback         Callback on frame received
+     * @param[in] aCallbackContext  Callback context
+     * @param[in] aFrameBuffer      A reference to a `RxFrameBuffer` object.
      *
      */
-    HdlcInterface(SpinelInterface::Callbacks &aCallback, SpinelInterface::RxFrameBuffer &aFrameBuffer);
+    HdlcInterface(Spinel::SpinelInterface::ReceiveFrameCallback aCallback,
+                  void *                                        aCallbackContext,
+                  Spinel::SpinelInterface::RxFrameBuffer &      aFrameBuffer);
 
     /**
      * This destructor deinitializes the object.
@@ -71,14 +74,14 @@ public:
      *
      * @note This method should be called before reading and sending spinel frames to the interface.
      *
-     * @param[in]  aPlatformConfig  Platform configuration structure.
+     * @param[in]  aArguments         Arguments parsed from radio url.
      *
      * @retval OT_ERROR_NONE          The interface is initialized successfully
      * @retval OT_ERROR_ALREADY       The interface is already initialized.
      * @retval OT_ERROR_INVALID_ARGS  The UART device or executable cannot be found or failed to open/run.
      *
      */
-    otError Init(const otPlatformConfig &aPlatformConfig);
+    otError Init(Arguments &aArguments);
 
     /**
      * This method deinitializes the interface to the RCP.
@@ -105,13 +108,13 @@ public:
     /**
      * This method waits for receiving part or all of spinel frame within specified interval.
      *
-     * @param[in]  aTimeout  A reference to the timeout.
+     * @param[in]  aTimeout  The timeout value in microseconds.
      *
      * @retval OT_ERROR_NONE             Part or all of spinel frame is received.
      * @retval OT_ERROR_RESPONSE_TIMEOUT No spinel frame is received within @p aTimeout.
      *
      */
-    otError WaitForFrame(const struct timeval &aTimeout);
+    otError WaitForFrame(uint64_t aTimeoutUs);
 
     /**
      * This method updates the file descriptor sets with file descriptors used by the radio driver.
@@ -127,24 +130,22 @@ public:
     /**
      * This method performs radio driver processing.
      *
-     * @param[in]   aReadFdSet      A reference to the read file descriptors.
-     * @param[in]   aWriteFdSet     A reference to the write file descriptors.
+     * @param[in]   aContext        The context containing fd_sets.
      *
      */
-    void Process(const fd_set &aReadFdSet, const fd_set &aWriteFdSet);
+    void Process(const RadioProcessContext &aContext);
 
 #if OPENTHREAD_POSIX_VIRTUAL_TIME
     /**
      * This method process read data (decode the data).
      *
      * This method is intended only for virtual time simulation. Its behavior is similar to `Read()` but instead of
-     * reading the data from the radio socket, it uses the given data in the buffer `aBuffer`.
+     * reading the data from the radio socket, it uses the given data in @p `aEvent`.
      *
-     * @param[in] aBuffer  A pointer to buffer containing data.
-     * @param[in] aLength  The length (number of bytes) in the buffer.
+     * @param[in] aEvent   The data event.
      *
      */
-    void ProcessReadData(const uint8_t *aBuffer, uint16_t aLength) { Decode(aBuffer, aLength); }
+    void Process(const Event &aEvent) { Decode(aEvent.mData, aEvent.mDataLength); }
 #endif
 
 private:
@@ -197,26 +198,31 @@ private:
     static void HandleHdlcFrame(void *aContext, otError aError);
     void        HandleHdlcFrame(otError aError);
 
-    static int OpenFile(const char *aFile, const char *aConfig);
+    static int OpenFile(const char *aFile, Arguments &aArguments);
 #if OPENTHREAD_POSIX_CONFIG_RCP_PTY_ENABLE
     static int ForkPty(const char *aCommand, const char *aArguments);
 #endif
 
     enum
     {
-        kMaxFrameSize = SpinelInterface::kMaxFrameSize,
+        kMaxFrameSize = Spinel::SpinelInterface::kMaxFrameSize,
         kMaxWaitTime  = 2000, ///< Maximum wait time in Milliseconds for socket to become writable (see `SendFrame`).
     };
 
-    SpinelInterface::Callbacks &    mCallbacks;
-    SpinelInterface::RxFrameBuffer &mRxFrameBuffer;
+    Spinel::SpinelInterface::ReceiveFrameCallback mReceiveFrameCallback;
+    void *                                        mReceiveFrameContext;
+    Spinel::SpinelInterface::RxFrameBuffer &      mReceiveFrameBuffer;
 
     int           mSockFd;
     Hdlc::Decoder mHdlcDecoder;
+
+    // Non-copyable, intentionally not implemented.
+    HdlcInterface(const HdlcInterface &);
+    HdlcInterface &operator=(const HdlcInterface &);
 };
 
-} // namespace PosixApp
+} // namespace Posix
 } // namespace ot
 
-#endif // OPENTHREAD_POSIX_CONFIG_RCP_UART_ENABLE
+#endif // OPENTHREAD_POSIX_CONFIG_RCP_BUS == OT_POSIX_RCP_BUS_UART
 #endif // POSIX_APP_HDLC_INTERFACE_HPP_

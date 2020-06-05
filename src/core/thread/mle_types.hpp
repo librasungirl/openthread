@@ -42,6 +42,9 @@
 
 #include <openthread/thread.h>
 
+#include "common/clearable.hpp"
+#include "common/encoding.hpp"
+#include "common/equatable.hpp"
 #include "common/string.hpp"
 #include "mac/mac_types.hpp"
 
@@ -63,6 +66,12 @@ enum
     kMaxChildren               = OPENTHREAD_CONFIG_MLE_MAX_CHILDREN,
     kMaxChildKeepAliveAttempts = 4, ///< Maximum keep alive attempts before attempting to reattach to a new Parent
     kFailedChildTransmissions  = OPENTHREAD_CONFIG_FAILED_CHILD_TRANSMISSIONS, ///< FAILED_CHILD_TRANSMISSIONS
+#if OPENTHREAD_FTD && OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
+    // Extra one for core Backbone Router Service.
+    kMaxServiceAlocs = OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_MAX_ALOCS + 1,
+#else
+    kMaxServiceAlocs      = OPENTHREAD_CONFIG_TMF_NETDATA_SERVICE_MAX_ALOCS,
+#endif
 };
 
 /**
@@ -90,12 +99,12 @@ enum
     kMaxChildUpdateResponseTimeout  = 2000, ///< Maximum delay for receiving a Child Update Response
     kMaxLinkRequestTimeout          = 2000, ///< Maximum delay for receiving a Link Accept
     kMinTimeoutKeepAlive            = (((kMaxChildKeepAliveAttempts + 1) * kUnicastRetransmissionDelay) /
-                            1000), ///< Minimum timeout(s) for keep alive
+                            1000), ///< Minimum timeout(in seconds) for keep alive
     kMinTimeoutDataPoll             = (OPENTHREAD_CONFIG_MAC_MINIMUM_POLL_PERIOD +
                            OPENTHREAD_CONFIG_FAILED_CHILD_TRANSMISSIONS * OPENTHREAD_CONFIG_MAC_RETX_POLL_PERIOD) /
-                          1000, ///< Minimum timeout(s) for data poll
+                          1000, ///< Minimum timeout(in seconds) for data poll
     kMinTimeout = (kMinTimeoutKeepAlive >= kMinTimeoutDataPoll ? kMinTimeoutKeepAlive
-                                                               : kMinTimeoutDataPoll), ///< Minimum timeout(s)
+                                                               : kMinTimeoutDataPoll), ///< Minimum timeout(in seconds)
 };
 
 enum
@@ -136,7 +145,7 @@ enum
 #else
     kMaxRouteCost         = 16, ///< MAX_ROUTE_COST
 #endif
-    kMaxRouterId                = 62,                                          ///< MAX_ROUTER_ID
+    kMaxRouterId                = OT_NETWORK_MAX_ROUTER_ID,                    ///< MAX_ROUTER_ID
     kInvalidRouterId            = kMaxRouterId + 1,                            ///< Value indicating incorrect Router Id
     kMaxRouters                 = OPENTHREAD_CONFIG_MLE_MAX_ROUTERS,           ///< MAX_ROUTERS
     kMinDowngradeNeighbors      = 7,                                           ///< MIN_DOWNGRADE_NEIGHBORS
@@ -184,6 +193,19 @@ enum
 };
 
 /**
+ * This type represents a Thread device role.
+ *
+ */
+enum DeviceRole
+{
+    kRoleDisabled = OT_DEVICE_ROLE_DISABLED, ///< The Thread stack is disabled.
+    kRoleDetached = OT_DEVICE_ROLE_DETACHED, ///< Not currently participating in a Thread network/partition.
+    kRoleChild    = OT_DEVICE_ROLE_CHILD,    ///< The Thread Child role.
+    kRoleRouter   = OT_DEVICE_ROLE_ROUTER,   ///< The Thread Router role.
+    kRoleLeader   = OT_DEVICE_ROLE_LEADER,   ///< The Thread Leader role.
+};
+
+/**
  * MLE Attach modes
  *
  */
@@ -210,6 +232,7 @@ enum AlocAllocation
     kAloc16ServiceEnd                  = 0xfc2f,
     kAloc16CommissionerStart           = 0xfc30,
     kAloc16CommissionerEnd             = 0xfc37,
+    kAloc16BackboneRouterPrimary       = 0xfc38,
     kAloc16CommissionerMask            = 0x0007,
     kAloc16NeighborDiscoveryAgentStart = 0xfc40,
     kAloc16NeighborDiscoveryAgentEnd   = 0xfc4e,
@@ -219,17 +242,32 @@ enum AlocAllocation
  * Service IDs
  *
  */
-enum ServiceID
+enum
 {
     kServiceMinId = 0x00, ///< Minimal Service ID.
     kServiceMaxId = 0x0f, ///< Maximal Service ID.
 };
 
+#if OPENTHREAD_FTD && OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
+
+/**
+ * Backbone Router constants
+ *
+ */
+enum
+{
+    kRegistrationDelayDefault         = 1200, //< In seconds.
+    kMlrTimeoutDefault                = 3600, //< In seconds.
+    kBackboneRouterRegistrationJitter = 5,    //< In seconds.
+};
+
+#endif
+
 /**
  * This type represents a MLE device mode.
  *
  */
-class DeviceMode
+class DeviceMode : public Equatable<DeviceMode>
 {
 public:
     enum
@@ -372,28 +410,6 @@ public:
     bool IsValid(void) const { return !IsFullThreadDevice() || IsRxOnWhenIdle(); }
 
     /**
-     *  This method overloads operator `==` to evaluate whether or not two device modes are equal
-     *
-     * @param[in]  aOther  The other device mode to compare with.
-     *
-     * @retval TRUE   If the device modes are equal.
-     * @retval FALSE  If the device modes are not equal.
-     *
-     */
-    bool operator==(const DeviceMode &aOther) const { return (mMode == aOther.mMode); }
-
-    /**
-     * This method overloads operator `!=` to evaluate whether or not two device modes are not equal.
-     *
-     * @param[in]  aOther  The other device mode to compare with.
-     *
-     * @retval TRUE   If the device modes are not equal.
-     * @retval FALSE  If the device modes are equal.
-     *
-     */
-    bool operator!=(const DeviceMode &aOther) const { return !(*this == aOther); }
-
-    /**
      * This method converts the device mode into a human-readable string.
      *
      * @returns An `InfoString` object representing the device mode.
@@ -410,7 +426,7 @@ private:
  *
  */
 OT_TOOL_PACKED_BEGIN
-class MeshLocalPrefix : public otMeshLocalPrefix
+class MeshLocalPrefix : public otMeshLocalPrefix, public Equatable<MeshLocalPrefix>
 {
 public:
     enum
@@ -418,28 +434,6 @@ public:
         kSize   = OT_MESH_LOCAL_PREFIX_SIZE,            ///< Size in bytes.
         kLength = OT_MESH_LOCAL_PREFIX_SIZE * CHAR_BIT, ///< Length of Mesh Local Prefix in bits.
     };
-
-    /**
-     * This method evaluates whether or not two Mesh Local Prefixes match.
-     *
-     * @param[in]  aOther  The Mesh Local Prefix to compare.
-     *
-     * @retval TRUE   If the Mesh Local Prefixes match.
-     * @retval FALSE  If the Mesh Local Prefixes do not match.
-     *
-     */
-    bool operator==(const MeshLocalPrefix &aOther) const { return memcmp(m8, aOther.m8, sizeof(*this)) == 0; }
-
-    /**
-     * This method evaluates whether or not two Mesh Local Prefixes match.
-     *
-     * @param[in]  aOther  The Mesh Local Prefix to compare.
-     *
-     * @retval TRUE   If the Mesh Local Prefixes do not match.
-     * @retval FALSE  If the Mesh Local Prefixes match.
-     *
-     */
-    bool operator!=(const MeshLocalPrefix &aOther) const { return !(*this == aOther); }
 
     /**
      * This method derives and sets the Mesh Local Prefix from an Extended PAN ID.
@@ -455,15 +449,9 @@ public:
  * This class represents the Thread Leader Data.
  *
  */
-class LeaderData : public otLeaderData
+class LeaderData : public otLeaderData, public Clearable<LeaderData>
 {
 public:
-    /**
-     * This method clears the Leader Data (setting all the fields to zero).
-     *
-     */
-    void Clear(void) { memset(this, 0, sizeof(*this)); }
-
     /**
      * This method returns the Partition ID value.
      *
@@ -544,6 +532,53 @@ public:
      */
     void SetLeaderRouterId(uint8_t aRouterId) { mLeaderRouterId = aRouterId; }
 };
+
+OT_TOOL_PACKED_BEGIN
+class RouterIdSet : public Equatable<RouterIdSet>
+{
+public:
+    /**
+     * This method clears the Router Id Set.
+     *
+     */
+    void Clear(void) { memset(mRouterIdSet, 0, sizeof(mRouterIdSet)); }
+
+    /**
+     * This method indicates whether or not a Router ID bit is set.
+     *
+     * @param[in]  aRouterId  The Router ID.
+     *
+     * @retval TRUE   If the Router ID bit is set.
+     * @retval FALSE  If the Router ID bit is not set.
+     *
+     */
+    bool Contains(uint8_t aRouterId) const { return (mRouterIdSet[aRouterId / 8] & (0x80 >> (aRouterId % 8))) != 0; }
+
+    /**
+     * This method sets a given Router ID.
+     *
+     * @param[in]  aRouterId  The Router ID to set.
+     *
+     */
+    void Add(uint8_t aRouterId) { mRouterIdSet[aRouterId / 8] |= 0x80 >> (aRouterId % 8); }
+
+    /**
+     * This method removes a given Router ID.
+     *
+     * @param[in]  aRouterId  The Router ID to remove.
+     *
+     */
+    void Remove(uint8_t aRouterId) { mRouterIdSet[aRouterId / 8] &= ~(0x80 >> (aRouterId % 8)); }
+
+private:
+    uint8_t mRouterIdSet[BitVectorBytes(Mle::kMaxRouterId + 1)];
+} OT_TOOL_PACKED_END;
+
+/**
+ * This class represents a MLE key.
+ *
+ */
+typedef Mac::Key Key;
 
 /**
  * @}

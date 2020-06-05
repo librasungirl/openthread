@@ -30,10 +30,9 @@
 import unittest
 
 import command
-import config
 import dtls
 import mle
-import node
+import thread_cert
 
 from command import CheckType
 
@@ -41,29 +40,21 @@ COMMISSIONER = 1
 JOINER = 2
 
 
-class Cert_8_1_01_Commissioning(unittest.TestCase):
+class Cert_8_1_01_Commissioning(thread_cert.TestCase):
+    support_ncp = False
 
-    def setUp(self):
-        self.simulator = config.create_default_simulator()
-
-        self.nodes = {}
-        for i in range(1, 3):
-            self.nodes[i] = node.Node(i, simulator=self.simulator)
-
-        self.nodes[COMMISSIONER].set_panid(0xface)
-        self.nodes[COMMISSIONER].set_mode('rsdn')
-        self.nodes[COMMISSIONER].set_masterkey(
-            '00112233445566778899aabbccddeeff')
-
-        self.nodes[JOINER].set_mode('rsdn')
-        self.nodes[JOINER].set_masterkey('deadbeefdeadbeefdeadbeefdeadbeef')
-        self.nodes[JOINER].set_router_selection_jitter(1)
-
-    def tearDown(self):
-        for n in list(self.nodes.values()):
-            n.stop()
-            n.destroy()
-        self.simulator.stop()
+    topology = {
+        COMMISSIONER: {
+            'masterkey': '00112233445566778899aabbccddeeff',
+            'mode': 'rsdn',
+            'panid': 0xface
+        },
+        JOINER: {
+            'masterkey': 'deadbeefdeadbeefdeadbeefdeadbeef',
+            'mode': 'rsdn',
+            'router_selection_jitter': 1
+        },
+    }
 
     def test(self):
         self.nodes[COMMISSIONER].interface_up()
@@ -73,10 +64,10 @@ class Cert_8_1_01_Commissioning(unittest.TestCase):
         self.nodes[COMMISSIONER].commissioner_start()
         self.simulator.go(3)
         self.nodes[COMMISSIONER].commissioner_add_joiner(
-            self.nodes[JOINER].get_eui64(), 'OPENTHREAD')
+            self.nodes[JOINER].get_eui64(), 'PSKD01')
 
         self.nodes[JOINER].interface_up()
-        self.nodes[JOINER].joiner_start('OPENTHREAD')
+        self.nodes[JOINER].joiner_start('PSKD01')
         self.simulator.go(10)
         self.simulator.read_cert_messages_in_commissioning_log(
             [COMMISSIONER, JOINER])

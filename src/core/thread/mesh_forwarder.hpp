@@ -109,7 +109,7 @@ public:
      * @returns The fragment priority value.
      *
      */
-    uint8_t GetPriority(void) const { return mPriority; }
+    Message::Priority GetPriority(void) const { return static_cast<Message::Priority>(mPriority); }
 
     /**
      * This method sets the fragment priority value.
@@ -117,7 +117,7 @@ public:
      * @param[in]  aPriority  The fragment priority value.
      *
      */
-    void SetPriority(uint8_t aPriority) { mPriority = aPriority; }
+    void SetPriority(Message::Priority aPriority) { mPriority = aPriority; }
 
     /**
      * This method returns the fragment priority entry's remaining lifetime.
@@ -254,7 +254,7 @@ public:
      *                       Use Message::kSubTypeNone remove all messages for @p aChild.
      *
      */
-    void RemoveMessages(Child &aChild, uint8_t aSubType);
+    void RemoveMessages(Child &aChild, Message::SubType aSubType);
 
     /**
      * This method frees unicast/multicast MLE Data Responses from Send Message Queue if any.
@@ -271,7 +271,7 @@ public:
      * @retval OT_ERROR_NOT_FOUND  No low priority messages available to evict.
      *
      */
-    otError EvictMessage(uint8_t aPriority);
+    otError EvictMessage(Message::Priority aPriority);
 
     /**
      * This method returns a reference to the send queue.
@@ -310,14 +310,13 @@ public:
      * @returns  A reference to the resolving queue.
      *
      */
-    const MessageQueue &GetResolvingQueue(void) const { return mResolvingQueue; }
+    const PriorityQueue &GetResolvingQueue(void) const { return mResolvingQueue; }
 #endif
 
 private:
     enum
     {
-        kStateUpdatePeriod  = 1000,                     ///< State update period in milliseconds.
-        kDefaultMsgPriority = Message::kPriorityNormal, ///< Default message priority.
+        kStateUpdatePeriod = 1000, ///< State update period in milliseconds.
 
         /**
          * The number of fragment priority entries.
@@ -336,11 +335,14 @@ private:
         kMessageEvict,           ///< Indicates that the message was evicted.
     };
 
-    otError CheckReachability(uint8_t *           aFrame,
+    void    SendIcmpErrorIfDstUnreach(const Message &     aMessage,
+                                      const Mac::Address &aMacSource,
+                                      const Mac::Address &aMacDest);
+    otError CheckReachability(const uint8_t *     aFrame,
                               uint16_t            aFrameLength,
                               const Mac::Address &aMeshSource,
                               const Mac::Address &aMeshDest);
-    void    UpdateRoutes(uint8_t *           aFrame,
+    void    UpdateRoutes(const uint8_t *     aFrame,
                          uint16_t            aFrameLength,
                          const Mac::Address &aMeshSource,
                          const Mac::Address &aMeshDest);
@@ -352,6 +354,12 @@ private:
                                  Ip6::Header &       aIp6Header,
                                  uint8_t &           aHeaderLength,
                                  bool &              aNextHeaderCompressed);
+    otError  FrameToMessage(const uint8_t *     aFrame,
+                            uint16_t            aFrameLength,
+                            uint16_t            aDatagramSize,
+                            const Mac::Address &aMacSource,
+                            const Mac::Address &aMacDest,
+                            Message *&          aMessage);
     otError  GetIp6Header(const uint8_t *     aFrame,
                           uint16_t            aFrameLength,
                           const Mac::Address &aMacSource,
@@ -365,12 +373,12 @@ private:
                         uint16_t                aFrameLength,
                         const Mac::Address &    aMacSource,
                         const otThreadLinkInfo &aLinkInfo);
-    void     HandleFragment(uint8_t *               aFrame,
+    void     HandleFragment(const uint8_t *         aFrame,
                             uint16_t                aFrameLength,
                             const Mac::Address &    aMacSource,
                             const Mac::Address &    aMacDest,
                             const otThreadLinkInfo &aLinkInfo);
-    void     HandleLowpanHC(uint8_t *               aFrame,
+    void     HandleLowpanHC(const uint8_t *         aFrame,
                             uint16_t                aFrameLength,
                             const Mac::Address &    aMacSource,
                             const Mac::Address &    aMacDest,
@@ -384,15 +392,16 @@ private:
                               uint16_t            aMeshDest      = 0xffff);
 
     void    SendMesh(Message &aMessage, Mac::TxFrame &aFrame);
+    void    SendDestinationUnreachable(uint16_t aMeshSource, const Message &aMessage);
     otError UpdateIp6Route(Message &aMessage);
-    otError UpdateIp6RouteFtd(Ip6::Header &ip6Header);
+    otError UpdateIp6RouteFtd(Ip6::Header &ip6Header, Message &aMessage);
     otError UpdateMeshRoute(Message &aMessage);
     bool    UpdateReassemblyList(void);
     bool    UpdateFragmentLifetime(void);
     void    UpdateFragmentPriority(Lowpan::FragmentHeader &aFragmentHeader,
                                    uint16_t                aFragmentLength,
                                    uint16_t                aSrcRloc16,
-                                   uint8_t                 aPriority);
+                                   Message::Priority       aPriority);
     otError HandleDatagram(Message &aMessage, const otThreadLinkInfo &aLinkInfo, const Mac::Address &aMacSource);
     void    ClearReassemblyList(void);
     void    RemoveMessage(Message &aMessage);
@@ -414,13 +423,15 @@ private:
                              uint16_t            aFrameLength,
                              const Mac::Address &aMacSource,
                              const Mac::Address &aMacDest,
-                             uint8_t &           aPriority);
-    otError GetFragmentPriority(Lowpan::FragmentHeader &aFragmentHeader, uint16_t aSrcRloc16, uint8_t &aPriority);
-    otError GetForwardFramePriority(const uint8_t *     aFrame,
+                             Message::Priority & aPriority);
+    otError GetFragmentPriority(Lowpan::FragmentHeader &aFragmentHeader,
+                                uint16_t                aSrcRloc16,
+                                Message::Priority &     aPriority);
+    void    GetForwardFramePriority(const uint8_t *     aFrame,
                                     uint16_t            aFrameLength,
                                     const Mac::Address &aMeshSource,
                                     const Mac::Address &aMeshDest,
-                                    uint8_t &           aPriority);
+                                    Message::Priority & aPriority);
 
     FragmentPriorityEntry *FindFragmentPriorityEntry(uint16_t aTag, uint16_t aSrcRloc16);
     FragmentPriorityEntry *GetUnusedFragmentPriorityEntry(void);
@@ -519,7 +530,7 @@ private:
 
 #if OPENTHREAD_FTD
     FragmentPriorityEntry mFragmentEntries[kNumFragmentPriorityEntries];
-    MessageQueue          mResolvingQueue;
+    PriorityQueue         mResolvingQueue;
     IndirectSender        mIndirectSender;
 #endif
 

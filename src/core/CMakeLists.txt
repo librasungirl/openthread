@@ -34,21 +34,18 @@ set_target_properties(
     openthread-ftd openthread-mtd openthread-radio
     PROPERTIES
         C_STANDARD 99
-        CXX_STANDARD 98
+        CXX_STANDARD 11
 )
 
 target_compile_definitions(openthread-ftd PRIVATE
-    ${OT_PRIVATE_DEFINES}
     OPENTHREAD_FTD=1
 )
 
 target_compile_definitions(openthread-mtd PRIVATE
-    ${OT_PRIVATE_DEFINES}
     OPENTHREAD_MTD=1
 )
 
 target_compile_definitions(openthread-radio PRIVATE
-    ${OT_PRIVATE_DEFINES}
     OPENTHREAD_RADIO=1
 )
 
@@ -70,6 +67,8 @@ set(COMMON_INCLUDES
 )
 
 set(COMMON_SOURCES
+    api/backbone_router_api.cpp
+    api/backbone_router_ftd_api.cpp
     api/border_router_api.cpp
     api/channel_manager_api.cpp
     api/channel_monitor_api.cpp
@@ -94,6 +93,7 @@ set(COMMON_SOURCES
     api/logging_api.cpp
     api/message_api.cpp
     api/netdata_api.cpp
+    api/netdiag_api.cpp
     api/network_time_api.cpp
     api/random_crypto_api.cpp
     api/random_noncrypto_api.cpp
@@ -103,6 +103,8 @@ set(COMMON_SOURCES
     api/thread_api.cpp
     api/thread_ftd_api.cpp
     api/udp_api.cpp
+    backbone_router/leader.cpp
+    backbone_router/local.cpp
     coap/coap.cpp
     coap/coap_message.cpp
     coap/coap_secure.cpp
@@ -147,8 +149,8 @@ set(COMMON_SOURCES
     meshcop/energy_scan_client.cpp
     meshcop/joiner.cpp
     meshcop/joiner_router.cpp
-    meshcop/leader.cpp
     meshcop/meshcop.cpp
+    meshcop/meshcop_leader.cpp
     meshcop/meshcop_tlvs.cpp
     meshcop/panid_query_client.cpp
     meshcop/timestamp.cpp
@@ -164,12 +166,14 @@ set(COMMON_SOURCES
     net/netif.cpp
     net/sntp_client.cpp
     net/udp6.cpp
+    radio/radio.cpp
     radio/radio_callbacks.cpp
     radio/radio_platform.cpp
     thread/address_resolver.cpp
     thread/announce_begin_server.cpp
     thread/announce_sender.cpp
     thread/child_table.cpp
+    thread/dua_manager.cpp
     thread/energy_scan_server.cpp
     thread/indirect_sender.cpp
     thread/key_manager.cpp
@@ -185,6 +189,7 @@ set(COMMON_SOURCES
     thread/network_data_leader.cpp
     thread/network_data_leader_ftd.cpp
     thread/network_data_local.cpp
+    thread/network_data_notifier.cpp
     thread/network_diagnostic.cpp
     thread/panid_query_server.cpp
     thread/router_table.cpp
@@ -198,6 +203,7 @@ set(COMMON_SOURCES
     utils/flash.cpp
     utils/heap.cpp
     utils/jam_detector.cpp
+    utils/otns.cpp
     utils/parse_cmdline.cpp
     utils/slaac_address.cpp
 )
@@ -222,26 +228,35 @@ target_sources(openthread-radio PRIVATE
     common/string.cpp
     common/tasklet.cpp
     common/timer.cpp
+    crypto/aes_ccm.cpp
+    crypto/aes_ecb.cpp
     diags/factory_diags.cpp
     mac/link_raw.cpp
     mac/mac_frame.cpp
     mac/mac_types.cpp
     mac/sub_mac.cpp
     mac/sub_mac_callbacks.cpp
+    radio/radio.cpp
     radio/radio_callbacks.cpp
     radio/radio_platform.cpp
     thread/link_quality.cpp
     utils/parse_cmdline.cpp
 )
 
-if(OT_BUILTIN_MBEDTLS)
-    target_link_libraries(openthread-ftd
-        PUBLIC
-            mbedcrypto
-    )
+target_link_libraries(openthread-ftd
+    PRIVATE
+        ${OT_MBEDTLS}
+        ot-config
+)
 
-    target_link_libraries(openthread-mtd
-        PUBLIC
-            mbedcrypto
-    )
-endif()
+target_link_libraries(openthread-mtd
+    PRIVATE
+        ${OT_MBEDTLS}
+        ot-config
+)
+
+target_link_libraries(openthread-radio
+    PRIVATE
+        ${OT_MBEDTLS}
+        ot-config
+)

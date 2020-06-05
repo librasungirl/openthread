@@ -140,7 +140,7 @@ exit:
     return error;
 }
 
-otError otLinkRawSrcMatchAddShortEntry(otInstance *aInstance, const uint16_t aShortAddress)
+otError otLinkRawSrcMatchAddShortEntry(otInstance *aInstance, uint16_t aShortAddress)
 {
     otError   error    = OT_ERROR_NONE;
     Instance &instance = *static_cast<Instance *>(aInstance);
@@ -168,7 +168,7 @@ exit:
     return error;
 }
 
-otError otLinkRawSrcMatchClearShortEntry(otInstance *aInstance, const uint16_t aShortAddress)
+otError otLinkRawSrcMatchClearShortEntry(otInstance *aInstance, uint16_t aShortAddress)
 {
     otError   error    = OT_ERROR_NONE;
     Instance &instance = *static_cast<Instance *>(aInstance);
@@ -219,6 +219,23 @@ otError otLinkRawSrcMatchClearExtEntries(otInstance *aInstance)
 
 exit:
     return error;
+}
+
+otError otLinkRawSetMacKey(otInstance *    aInstance,
+                           uint8_t         aKeyIdMode,
+                           uint8_t         aKeyId,
+                           const otMacKey *aPrevKey,
+                           const otMacKey *aCurrKey,
+                           const otMacKey *aNextKey)
+{
+    return static_cast<Instance *>(aInstance)->Get<Mac::LinkRaw>().SetMacKey(
+        aKeyIdMode, aKeyId, *static_cast<const Mac::Key *>(aPrevKey), *static_cast<const Mac::Key *>(aCurrKey),
+        *static_cast<const Mac::Key *>(aNextKey));
+}
+
+otError otLinkRawSetMacFrameCounter(otInstance *aInstance, uint32_t aMacFrameCounter)
+{
+    return static_cast<Instance *>(aInstance)->Get<Mac::LinkRaw>().SetMacFrameCounter(aMacFrameCounter);
 }
 
 #if OPENTHREAD_RADIO

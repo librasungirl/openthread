@@ -30,10 +30,18 @@ add_executable(ot-daemon
     main.c
 )
 
+set_target_properties(
+    ot-daemon
+    PROPERTIES
+        C_STANDARD 99
+        CXX_STANDARD 11
+)
+
 target_include_directories(ot-daemon PRIVATE ${COMMON_INCLUDES})
 
 target_compile_definitions(ot-daemon PRIVATE
     OPENTHREAD_POSIX_APP_TYPE=OT_POSIX_APP_TYPE_CLI
+    ${OT_PLATFORM_DEFINES}
 )
 
 target_compile_options(ot-daemon PRIVATE
@@ -53,16 +61,25 @@ add_executable(ot-ctl
     client.cpp
 )
 
+set_target_properties(
+    ot-ctl
+    PROPERTIES
+        C_STANDARD 99
+        CXX_STANDARD 11
+)
+
 target_compile_definitions(ot-ctl PRIVATE
     $<$<BOOL:${READLINE}>:HAVE_LIB$<UPPER_CASE:${OT_READLINE}>=1>
+    ${OT_PLATFORM_DEFINES}
 )
 
 target_compile_options(ot-ctl PRIVATE
     ${OT_CFLAGS}
 )
 
-target_link_libraries(ot-ctl
-    $<$<BOOL:${READLINE}>:${OT_READLINE}>
+target_link_libraries(ot-ctl PRIVATE
+    ${READLINE_LINK_LIBRARIES}
+    ot-config
 )
 
 target_include_directories(ot-ctl PRIVATE ${COMMON_INCLUDES})
@@ -71,5 +88,3 @@ install(TARGETS ot-daemon
     DESTINATION sbin)
 install(TARGETS ot-ctl
     DESTINATION bin)
-
-set(CPACK_PACKAGE_NAME "openthread-daemon")

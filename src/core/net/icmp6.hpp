@@ -84,11 +84,12 @@ public:
      */
     enum Type
     {
-        kTypeDstUnreach   = OT_ICMP6_TYPE_DST_UNREACH,   ///< Destination Unreachable
-        kTypePacketToBig  = OT_ICMP6_TYPE_PACKET_TO_BIG, ///< Packet To Big
-        kTypeTimeExceeded = OT_ICMP6_TYPE_TIME_EXCEEDED, ///< Time Exceeded
-        kTypeEchoRequest  = OT_ICMP6_TYPE_ECHO_REQUEST,  ///< Echo Request
-        kTypeEchoReply    = OT_ICMP6_TYPE_ECHO_REPLY,    ///< Echo Reply
+        kTypeDstUnreach       = OT_ICMP6_TYPE_DST_UNREACH,       ///< Destination Unreachable
+        kTypePacketToBig      = OT_ICMP6_TYPE_PACKET_TO_BIG,     ///< Packet To Big
+        kTypeTimeExceeded     = OT_ICMP6_TYPE_TIME_EXCEEDED,     ///< Time Exceeded
+        kTypeParameterProblem = OT_ICMP6_TYPE_PARAMETER_PROBLEM, ///< Parameter Problem
+        kTypeEchoRequest      = OT_ICMP6_TYPE_ECHO_REQUEST,      ///< Echo Request
+        kTypeEchoReply        = OT_ICMP6_TYPE_ECHO_REPLY,        ///< Echo Reply
     };
 
     /**
@@ -100,6 +101,15 @@ public:
         kCodeDstUnreachNoRoute = OT_ICMP6_CODE_DST_UNREACH_NO_ROUTE, ///< Destination Unreachable No Route
         kCodeFragmReasTimeEx   = OT_ICMP6_CODE_FRAGM_REAS_TIME_EX,   ///< Fragment Reassembly Time Exceeded
     };
+
+    /**
+     * This method indicates whether the ICMPv6 message is an error message.
+     *
+     * @retval TRUE if the ICMPv6 message is an error message.
+     * @retval FALSE if the ICMPv6 message is an informational message.
+     *
+     */
+    bool IsError(void) const { return mType < OT_ICMP6_TYPE_ECHO_REQUEST; }
 
     /**
      * This method returns the ICMPv6 message type.
@@ -284,7 +294,7 @@ public:
      * @param[in]  aType         The ICMPv6 message type.
      * @param[in]  aCode         The ICMPv6 message code.
      * @param[in]  aMessageInfo  A reference to the message info.
-     * @param[in]  aHeader       The IPv6 header of the error-causing message.
+     * @param[in]  aMessage      The error-causing IPv6 message.
      *
      * @retval OT_ERROR_NONE     Successfully enqueued the ICMPv6 error message.
      * @retval OT_ERROR_NO_BUFS  Insufficient buffers available.
@@ -293,7 +303,7 @@ public:
     otError SendError(IcmpHeader::Type   aType,
                       IcmpHeader::Code   aCode,
                       const MessageInfo &aMessageInfo,
-                      const Header &     aHeader);
+                      const Message &    aMessage);
 
     /**
      * This method handles an ICMPv6 message.

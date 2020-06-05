@@ -70,7 +70,7 @@ IndirectSender::IndirectSender(Instance &aInstance)
 
 void IndirectSender::Stop(void)
 {
-    VerifyOrExit(mEnabled);
+    VerifyOrExit(mEnabled, OT_NOOP);
 
     for (ChildTable::Iterator iter(GetInstance(), Child::kInStateAnyExceptInvalid); !iter.IsDone(); iter++)
     {
@@ -84,15 +84,14 @@ exit:
     mEnabled = false;
 }
 
-otError IndirectSender::AddMessageForSleepyChild(Message &aMessage, Child &aChild)
+void IndirectSender::AddMessageForSleepyChild(Message &aMessage, Child &aChild)
 {
-    otError  error = OT_ERROR_NONE;
     uint16_t childIndex;
 
-    VerifyOrExit(!aChild.IsRxOnWhenIdle(), error = OT_ERROR_INVALID_STATE);
+    OT_ASSERT(!aChild.IsRxOnWhenIdle());
 
     childIndex = Get<ChildTable>().GetChildIndex(aChild);
-    VerifyOrExit(!aMessage.GetChildMask(childIndex), error = OT_ERROR_ALREADY);
+    VerifyOrExit(!aMessage.GetChildMask(childIndex), OT_NOOP);
 
     aMessage.SetChildMask(childIndex);
     mSourceMatchController.IncrementMessageCount(aChild);
@@ -100,7 +99,7 @@ otError IndirectSender::AddMessageForSleepyChild(Message &aMessage, Child &aChil
     RequestMessageUpdate(aChild);
 
 exit:
-    return error;
+    return;
 }
 
 otError IndirectSender::RemoveMessageFromSleepyChild(Message &aMessage, Child &aChild)
@@ -124,7 +123,7 @@ void IndirectSender::ClearAllMessagesForSleepyChild(Child &aChild)
     Message *message;
     Message *nextMessage;
 
-    VerifyOrExit(aChild.GetIndirectMessageCount() > 0);
+    VerifyOrExit(aChild.GetIndirectMessageCount() > 0, OT_NOOP);
 
     for (message = Get<MeshForwarder>().mSendQueue.GetHead(); message; message = nextMessage)
     {
@@ -155,7 +154,7 @@ exit:
 
 void IndirectSender::SetChildUseShortAddress(Child &aChild, bool aUseShortAddress)
 {
-    VerifyOrExit(aChild.IsIndirectSourceMatchShort() != aUseShortAddress);
+    VerifyOrExit(aChild.IsIndirectSourceMatchShort() != aUseShortAddress, OT_NOOP);
 
     mSourceMatchController.SetSrcMatchAsShort(aChild, aUseShortAddress);
 
@@ -260,11 +259,11 @@ void IndirectSender::RequestMessageUpdate(Child &aChild)
         ExitNow();
     }
 
-    VerifyOrExit(!aChild.IsWaitingForMessageUpdate());
+    VerifyOrExit(!aChild.IsWaitingForMessageUpdate(), OT_NOOP);
 
     newMessage = FindIndirectMessage(aChild);
 
-    VerifyOrExit(curMessage != newMessage);
+    VerifyOrExit(curMessage != newMessage, OT_NOOP);
 
     if (curMessage == NULL)
     {
@@ -281,7 +280,7 @@ void IndirectSender::RequestMessageUpdate(Child &aChild)
     // fragment. If a next fragment frame for message is already
     // prepared, we wait for the entire message to be delivered.
 
-    VerifyOrExit(aChild.GetIndirectFragmentOffset() == 0);
+    VerifyOrExit(aChild.GetIndirectFragmentOffset() == 0, OT_NOOP);
 
     aChild.SetWaitingForMessageUpdate(true);
     mDataPollHandler.RequestFrameChange(DataPollHandler::kReplaceFrame, aChild);
@@ -292,7 +291,7 @@ exit:
 
 void IndirectSender::HandleFrameChangeDone(Child &aChild)
 {
-    VerifyOrExit(aChild.IsWaitingForMessageUpdate());
+    VerifyOrExit(aChild.IsWaitingForMessageUpdate(), OT_NOOP);
     UpdateIndirectMessage(aChild);
 
 exit:
@@ -345,7 +344,7 @@ otError IndirectSender::PrepareFrameForChild(Mac::TxFrame &aFrame, FrameContext 
 
     default:
         OT_ASSERT(false);
-        break;
+        OT_UNREACHABLE_CODE(break);
     }
 
 exit:
@@ -424,7 +423,7 @@ void IndirectSender::PrepareEmptyFrame(Mac::TxFrame &aFrame, Child &aChild, bool
     aFrame.InitMacHeader(fcf, Mac::Frame::kKeyIdMode1 | Mac::Frame::kSecEncMic32);
 
     aFrame.SetDstPanId(Get<Mac::Mac>().GetPanId());
-    aFrame.SetSrcPanId(Get<Mac::Mac>().GetPanId());
+    IgnoreError(aFrame.SetSrcPanId(Get<Mac::Mac>().GetPanId()));
     aFrame.SetDstAddr(macDest);
     aFrame.SetSrcAddr(macSource);
     aFrame.SetPayloadLength(0);
@@ -439,7 +438,7 @@ void IndirectSender::HandleSentFrameToChild(const Mac::TxFrame &aFrame,
     Message *message    = aChild.GetIndirectMessage();
     uint16_t nextOffset = aContext.mMessageNextOffset;
 
-    VerifyOrExit(mEnabled);
+    VerifyOrExit(mEnabled, OT_NOOP);
 
     switch (aError)
     {
@@ -467,7 +466,7 @@ void IndirectSender::HandleSentFrameToChild(const Mac::TxFrame &aFrame,
 
     default:
         OT_ASSERT(false);
-        break;
+        OT_UNREACHABLE_CODE(break);
     }
 
     if ((message != NULL) && (nextOffset < message->GetLength()))
@@ -517,7 +516,7 @@ void IndirectSender::HandleSentFrameToChild(const Mac::TxFrame &aFrame,
 
         if (!aFrame.IsEmpty())
         {
-            aFrame.GetDstAddr(macDest);
+            IgnoreError(aFrame.GetDstAddr(macDest));
             Get<MeshForwarder>().LogMessage(MeshForwarder::kMessageTransmit, *message, &macDest, txError);
         }
 

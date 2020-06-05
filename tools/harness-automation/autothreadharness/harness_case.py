@@ -316,8 +316,8 @@ class HarnessCase(unittest.TestCase):
             browser = webdriver.Chrome(chrome_options=chrome_options)
             browser.set_page_load_timeout(20)
             browser.implicitly_wait(1)
-            browser.maximize_window()
             browser.get(settings.HARNESS_URL)
+            browser.maximize_window()
             self._browser = browser
             if not wait_until(lambda: 'Thread' in browser.title, 30):
                 self.assertIn('Thread', browser.title)
@@ -882,6 +882,15 @@ class HarnessCase(unittest.TestCase):
         finder = re.compile(r'.*\b' + case + r'\b')
         finder_dotted = re.compile(r'.*\b' + case.replace(' ', r'\.') + r'\b')
         for elem in elems:
+            # elem.txt might be null when the required reference devices could
+            # not be met (either due to the quantity or the type) for specific test.
+            # perform() will throw exceptions if elem.text is null since Chrome
+            # and chromedriver 80. If elem is not shown in current case list
+            # window, move_to_element() will not work either.
+            if not elem.text:
+                continue
+            # execute a javascript to scroll the window to the elem
+            self._browser.execute_script('arguments[0].scrollIntoView();', elem)
             action_chains = ActionChains(self._browser)
             action_chains.move_to_element(elem)
             action_chains.perform()

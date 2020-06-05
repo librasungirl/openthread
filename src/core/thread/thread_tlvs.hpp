@@ -41,6 +41,7 @@
 #include "common/tlvs.hpp"
 #include "net/ip6_address.hpp"
 #include "thread/mle.hpp"
+#include "thread/mle_types.hpp"
 
 namespace ot {
 
@@ -94,23 +95,6 @@ public:
      */
     void SetType(Type aType) { ot::Tlv::SetType(static_cast<uint8_t>(aType)); }
 
-    /**
-     * This static method reads the requested TLV out of @p aMessage.
-     *
-     * @param[in]   aMessage    A reference to the message.
-     * @param[in]   aType       The Type value to search for.
-     * @param[in]   aMaxLength  Maximum number of bytes to read.
-     * @param[out]  aTlv        A reference to the TLV that will be copied to.
-     *
-     * @retval OT_ERROR_NONE       Successfully copied the TLV.
-     * @retval OT_ERROR_NOT_FOUND  Could not find the TLV with Type @p aType.
-     *
-     */
-    static otError GetTlv(const Message &aMessage, Type aType, uint16_t aMaxLength, Tlv &aTlv)
-    {
-        return ot::Tlv::Get(aMessage, static_cast<uint8_t>(aType), aMaxLength, aTlv);
-    }
-
 } OT_TOOL_PACKED_END;
 
 /**
@@ -149,6 +133,7 @@ public:
     {
         SetType(kRouterMask);
         SetLength(sizeof(*this) - sizeof(ThreadTlv));
+        mAssignedRouterIdMask.Clear();
     }
 
     /**
@@ -177,36 +162,24 @@ public:
     void SetIdSequence(uint8_t aSequence) { mIdSequence = aSequence; }
 
     /**
-     * This method clears the Assigned Router ID Mask.
+     * This method gets the Assigned Router ID Mask.
+     *
+     * @returns The Assigned Router ID Mask.
      *
      */
-    void ClearAssignedRouterIdMask(void) { memset(mAssignedRouterIdMask, 0, sizeof(mAssignedRouterIdMask)); }
+    const Mle::RouterIdSet &GetAssignedRouterIdMask(void) const { return mAssignedRouterIdMask; }
 
     /**
-     * This method indicates whether or not a given Router ID is set in the Assigned Router ID Mask.
+     * This method sets the Assigned Router ID Mask.
      *
-     * @param[in]  aRouterId  The Router ID.
-     *
-     * @retval TRUE   If the given Router ID is set in the Assigned Router ID Mask.
-     * @retval FALSE  If the given Router ID is not set in the Assigned Router ID Mask.
+     * @param[in]  aRouterIdSet A reference to the Assigned Router ID Mask.
      *
      */
-    bool IsAssignedRouterIdSet(uint8_t aRouterId) const
-    {
-        return (mAssignedRouterIdMask[aRouterId / 8] & (0x80 >> (aRouterId % 8))) != 0;
-    }
-
-    /**
-     * This method clears the Assigned Router ID Mask.
-     *
-     * @param[in]  aRouterId  The Router ID.
-     *
-     */
-    void SetAssignedRouterId(uint8_t aRouterId) { mAssignedRouterIdMask[aRouterId / 8] |= 0x80 >> (aRouterId % 8); }
+    void SetAssignedRouterIdMask(const Mle::RouterIdSet &aRouterIdSet) { mAssignedRouterIdMask = aRouterIdSet; }
 
 private:
-    uint8_t mIdSequence;
-    uint8_t mAssignedRouterIdMask[BitVectorBytes(Mle::kMaxRouterId + 1)];
+    uint8_t          mIdSequence;
+    Mle::RouterIdSet mAssignedRouterIdMask;
 };
 
 /**

@@ -345,7 +345,29 @@
 #define SPINEL_PROTOCOL_VERSION_THREAD_MAJOR 4
 #define SPINEL_PROTOCOL_VERSION_THREAD_MINOR 3
 
+/**
+ * @def SPINEL_FRAME_MAX_SIZE
+ *
+ *  The maximum size of SPINEL frame.
+ *
+ */
 #define SPINEL_FRAME_MAX_SIZE 1300
+
+/**
+ * @def SPINEL_FRAME_MAX_COMMAND_HEADER_SIZE
+ *
+ *  The maximum size of SPINEL command header.
+ *
+ */
+#define SPINEL_FRAME_MAX_COMMAND_HEADER_SIZE 4
+
+/**
+ * @def SPINEL_FRAME_MAX_PAYLOAD_SIZE
+ *
+ *  The maximum size of SPINEL command payload.
+ *
+ */
+#define SPINEL_FRAME_MAX_COMMAND_PAYLOAD_SIZE (SPINEL_FRAME_MAX_SIZE - SPINEL_FRAME_MAX_COMMAND_HEADER_SIZE)
 
 /**
  * @def SPINEL_ENCRYPTER_EXTRA_DATA_SIZE
@@ -621,6 +643,7 @@ enum
     SPINEL_NCP_LOG_REGION_OT_CLI      = 14,
     SPINEL_NCP_LOG_REGION_OT_CORE     = 15,
     SPINEL_NCP_LOG_REGION_OT_UTIL     = 16,
+    SPINEL_NCP_LOG_REGION_OT_BBR      = 17,
 };
 
 enum
@@ -628,6 +651,14 @@ enum
     SPINEL_MESHCOP_COMMISSIONER_STATE_DISABLED = 0,
     SPINEL_MESHCOP_COMMISSIONER_STATE_PETITION = 1,
     SPINEL_MESHCOP_COMMISSIONER_STATE_ACTIVE   = 2,
+};
+
+enum
+{
+    SPINEL_ADDRESS_CACHE_ENTRY_STATE_CACHED      = 0, // Entry is cached and in-use.
+    SPINEL_ADDRESS_CACHE_ENTRY_STATE_SNOOPED     = 1, // Entry is created by snoop optimization.
+    SPINEL_ADDRESS_CACHE_ENTRY_STATE_QUERY       = 2, // Entry represents an ongoing query for the EID.
+    SPINEL_ADDRESS_CACHE_ENTRY_STATE_RETRY_QUERY = 3, // Entry is in retry mode (a prior query did not  a response).
 };
 
 typedef struct
@@ -661,11 +692,12 @@ typedef uint8_t      spinel_tid_t;
 
 enum
 {
-    SPINEL_MD_FLAG_TX       = 0x0001, //!< Packet was transmitted, not received.
-    SPINEL_MD_FLAG_BAD_FCS  = 0x0004, //!< Packet was received with bad FCS
-    SPINEL_MD_FLAG_DUPE     = 0x0008, //!< Packet seems to be a duplicate
-    SPINEL_MD_FLAG_ACKED_FP = 0x0010, //!< Packet was acknowledged with frame pending set
-    SPINEL_MD_FLAG_RESERVED = 0xFFE2, //!< Flags reserved for future use.
+    SPINEL_MD_FLAG_TX        = 0x0001, //!< Packet was transmitted, not received.
+    SPINEL_MD_FLAG_BAD_FCS   = 0x0004, //!< Packet was received with bad FCS
+    SPINEL_MD_FLAG_DUPE      = 0x0008, //!< Packet seems to be a duplicate
+    SPINEL_MD_FLAG_ACKED_FP  = 0x0010, //!< Packet was acknowledged with frame pending set
+    SPINEL_MD_FLAG_ACKED_SEC = 0x0020, //!< Packet was acknowledged with secure enhance ACK
+    SPINEL_MD_FLAG_RESERVED  = 0xFFC2, //!< Flags reserved for future use.
 };
 
 enum
@@ -1106,6 +1138,7 @@ typedef uint32_t spinel_capability_t;
  *    Interface    | 0x100 - 0x1FF                  | Interface (e.g., UART)
  *    PIB          | 0x400 - 0x4FF                  | 802.15.4 PIB
  *    Counter      | 0x500 - 0x7FF                  | Counters (MAC, IP, etc).
+ *    RCP          | 0x800 - 0x8FF                  | RCP specific property
  *    Nest         |                0x3BC0 - 0x3BFF | Nest (legacy)
  *    Vendor       |                0x3C00 - 0x3FFF | Vendor specific
  *    Debug        |                0x4000 - 0x43FF | Debug related
@@ -2646,7 +2679,7 @@ enum
     SPINEL_PROP_THREAD_NEIGHBOR_TABLE_ERROR_RATES = SPINEL_PROP_THREAD_EXT__BEGIN + 34,
 
     /// EID (Endpoint Identifier) IPv6 Address Cache Table
-    /** Format `A(t(6SC))`
+    /** Format `A(t(6SCCt(bL6)t(bSS)))
      *
      * This property provides Thread EID address cache table.
      *
@@ -2655,6 +2688,17 @@ enum
      *  `6` : Target IPv6 address
      *  `S` : RLOC16 of target
      *  `C` : Age (order of use, 0 indicates most recently used entry)
+     *  `C` : Entry state (values are defined by enumeration `SPINEL_ADDRESS_CACHE_ENTRY_STATE_*`).
+     *
+     *  `t` : Info when state is `SPINEL_ADDRESS_CACHE_ENTRY_STATE_CACHED`
+     *    `b` : Indicates whether last transaction time and ML-EID are valid.
+     *    `L` : Last transaction time
+     *    `6` : Mesh-local EID
+     *
+     *  `t` : Info when state is other than `SPINEL_ADDRESS_CACHE_ENTRY_STATE_CACHED`
+     *    `b` : Indicates whether the entry can be evicted.
+     *    `S` : Timeout in seconds
+     *    `S` : Retry delay (applicable if in query-retry state).
      *
      */
     SPINEL_PROP_THREAD_ADDRESS_CACHE_TABLE = SPINEL_PROP_THREAD_EXT__BEGIN + 35,
@@ -2911,6 +2955,10 @@ enum
      *        (use Thread stack default if not specified)
      *  `b` : Set to true to enable CSMA-CA for this packet, false otherwise.
      *        (default true).
+     *  `b` : Set to true to indicate it is a retransmission packet, false otherwise.
+     *        (default false).
+     *  `b` : Set to true to indicate that SubMac should skip AES processing, false otherwise.
+     *        (default false).
      *
      */
     SPINEL_PROP_STREAM_RAW = SPINEL_PROP_STREAM__BEGIN + 1,
@@ -3888,6 +3936,34 @@ enum
     SPINEL_PROP_CNTR_MAC_RETRY_HISTOGRAM = SPINEL_PROP_CNTR__BEGIN + 404,
 
     SPINEL_PROP_CNTR__END = 0x800,
+
+    SPINEL_PROP_RCP__BEGIN = 0x800,
+
+    /// MAC Key
+    /** Format: `CCddd`.
+     *
+     *  `C`: MAC key ID mode
+     *  `C`: MAC key ID
+     *  `d`: previous MAC key material data
+     *  `d`: current MAC key material data
+     *  `d`: next MAC key material data
+     *
+     * The Spinel property is used to set/get MAC key materials to and from RCP.
+     *
+     */
+    SPINEL_PROP_RCP_MAC_KEY = SPINEL_PROP_RCP__BEGIN + 0,
+
+    /// MAC Frame Counter
+    /** Format: `L`.
+     *
+     *  `L`: MAC frame counter
+     *
+     * The Spinel property is used to set MAC frame counter to RCP.
+     *
+     */
+    SPINEL_PROP_RCP_MAC_FRAME_COUNTER = SPINEL_PROP_RCP__BEGIN + 1,
+
+    SPINEL_PROP_RCP__END = 0x900,
 
     SPINEL_PROP_NEST__BEGIN = 0x3BC0,
 

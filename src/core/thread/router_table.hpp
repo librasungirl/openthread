@@ -163,12 +163,12 @@ public:
     otError Release(uint8_t aRouterId);
 
     /**
-     * This method removes a neighboring router link.
+     * This method removes a router link.
      *
      * @param[in]  aRouter  A reference to the router.
      *
      */
-    void RemoveNeighbor(Router &aRouter);
+    void RemoveRouterLink(Router &aRouter);
 
     /**
      * This method returns the number of active routers in the Thread network.
@@ -266,6 +266,22 @@ public:
     Router *GetRouter(const Mac::ExtAddress &aExtAddress);
 
     /**
+     * This method returns if the router table contains a given `Neighbor` instance.
+     *
+     * @param[in]  aNeighbor  A reference to a `Neighbor`.
+     *
+     * @retval TRUE  if @p aNeighbor is a `Router` in the router table.
+     * @retval FALSE if @p aNeighbor is not a `Router` in the router table
+     *               (i.e. mParent, mParentCandidate, a `Child` of the child table).
+     *
+     */
+    bool Contains(const Neighbor &aNeighbor) const
+    {
+        return mRouters <= &static_cast<const Router &>(aNeighbor) &&
+               &static_cast<const Router &>(aNeighbor) < mRouters + Mle::kMaxRouters;
+    }
+
+    /**
      * This method retains diagnostic information for a given router.
      *
      * @param[in]   aRouterId    The router ID or RLOC16 for a given router.
@@ -312,20 +328,21 @@ public:
     bool IsAllocated(uint8_t aRouterId) const;
 
     /**
-     * This method updates the router table with a received Route TLV.
+     * This method updates the Router ID allocation.
      *
-     * @param[in]  aTlv  A reference to the Route TLV.
+     * @param[in]  aRouterIdSequence  The Router Id Sequence.
+     * @param[in]  aRouterIdSet       A reference to the Router Id Set.
      *
      */
-    void ProcessTlv(const Mle::RouteTlv &aTlv);
+    void UpdateRouterIdSet(uint8_t aRouterIdSequence, const Mle::RouterIdSet &aRouterIdSet);
 
     /**
-     * This method updates the router table with a received Router Mask TLV.
+     * This method gets the allocated Router ID set.
      *
-     * @param[in]  aTlv  A reference to the Router Mask TLV.
+     * @returns The allocated Router ID set.
      *
      */
-    void ProcessTlv(const ThreadRouterMaskTlv &aTlv);
+    const Mle::RouterIdSet &GetRouterIdSet(void) const { return mAllocatedRouterIds; }
 
     /**
      * This method updates the router table and must be called with a one second period.
@@ -334,18 +351,6 @@ public:
     void ProcessTimerTick(void);
 
 private:
-    class RouterIdSet
-    {
-    public:
-        void Clear(void) { memset(mRouterIdSet, 0, sizeof(mRouterIdSet)); }
-        bool Contains(uint8_t aRouterId) const { return (mRouterIdSet[aRouterId / 8] & (1 << (aRouterId % 8))) != 0; }
-        void Add(uint8_t aRouterId) { mRouterIdSet[aRouterId / 8] |= 1 << (aRouterId % 8); }
-        void Remove(uint8_t aRouterId) { mRouterIdSet[aRouterId / 8] &= ~(1 << (aRouterId % 8)); }
-
-    private:
-        uint8_t mRouterIdSet[BitVectorBytes(Mle::kMaxRouterId + 1)];
-    };
-
     void          UpdateAllocation(void);
     const Router *GetFirstEntry(void) const;
     const Router *GetNextEntry(const Router *aRouter) const;
@@ -355,12 +360,12 @@ private:
         return const_cast<Router *>(const_cast<const RouterTable *>(this)->GetNextEntry(aRouter));
     }
 
-    Router      mRouters[Mle::kMaxRouters];
-    RouterIdSet mAllocatedRouterIds;
-    uint8_t     mRouterIdReuseDelay[Mle::kMaxRouterId + 1];
-    TimeMilli   mRouterIdSequenceLastUpdated;
-    uint8_t     mRouterIdSequence;
-    uint8_t     mActiveRouterCount;
+    Router           mRouters[Mle::kMaxRouters];
+    Mle::RouterIdSet mAllocatedRouterIds;
+    uint8_t          mRouterIdReuseDelay[Mle::kMaxRouterId + 1];
+    TimeMilli        mRouterIdSequenceLastUpdated;
+    uint8_t          mRouterIdSequence;
+    uint8_t          mActiveRouterCount;
 };
 
 } // namespace ot

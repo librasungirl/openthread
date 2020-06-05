@@ -158,26 +158,34 @@ public:
      * @retval OT_ERROR_NOT_FOUND  Could not find the TLV with Type @p aType.
      *
      */
-    static otError GetTlv(const Message &aMessage, Type aType, uint16_t aMaxLength, Tlv &aTlv)
+    static otError FindTlv(const Message &aMessage, Type aType, uint16_t aMaxLength, Tlv &aTlv)
     {
-        return ot::Tlv::Get(aMessage, static_cast<uint8_t>(aType), aMaxLength, aTlv);
+        return ot::Tlv::FindTlv(aMessage, static_cast<uint8_t>(aType), aMaxLength, aTlv);
     }
 
     /**
-     * This static method finds the offset and length of a given TLV type.
+     * This static method searches for a TLV with a given type in a message, ensures its length is same or larger than
+     * an expected minimum value, and then reads its value into a given buffer.
      *
-     * @param[in]   aMessage    A reference to the message.
-     * @param[in]   aType       The Type value to search for.
-     * @param[out]  aOffset     The offset where the value starts.
-     * @param[out]  aLength     The length of the value.
+     * If the TLV length is smaller than the minimum length @p aLength, the TLV is considered invalid. In this case,
+     * this method returns `OT_ERROR_PARSE` and the @p aValue buffer is not updated.
      *
-     * @retval OT_ERROR_NONE       Successfully found the TLV.
+     * If the TLV length is larger than @p aLength, the TLV is considered valid, but only the first @p aLength bytes
+     * of the value are read and copied into the @p aValue buffer.
+     *
+     * @param[in]    aMessage    A reference to the message.
+     * @param[in]    aType       The TLV type to search for.
+     * @param[out]   aValue      A buffer to output the value (must contain at least @p aLength bytes).
+     * @param[in]    aLength     The expected (minimum) length of the TLV value.
+     *
+     * @retval OT_ERROR_NONE       The TLV was found and read successfully. @p aValue is updated.
      * @retval OT_ERROR_NOT_FOUND  Could not find the TLV with Type @p aType.
+     * @retval OT_ERROR_PARSE      TLV was found but it was not well-formed and could not be parsed.
      *
      */
-    static otError GetValueOffset(const Message &aMessage, Type aType, uint16_t &aOffset, uint16_t &aLength)
+    static otError FindTlv(const Message &aMessage, Type aType, void *aValue, uint8_t aLength)
     {
-        return ot::Tlv::GetValueOffset(aMessage, static_cast<uint8_t>(aType), aOffset, aLength);
+        return ot::Tlv::FindTlv(aMessage, aType, aValue, aLength);
     }
 
     /**
@@ -189,6 +197,63 @@ public:
      *
      */
     static bool IsValid(const Tlv &aTlv);
+
+    /**
+     * This static method searches in a given sequence of TLVs to find the first TLV with a given template Type.
+     *
+     * @param[in]  aTlvsStart  A pointer to the start of the sequence of TLVs to search within.
+     * @param[in]  aTlvsLength The length (number of bytes) in TLV sequence.
+     * @param[in]  aType       The TLV Type to search for.
+     *
+     * @returns A pointer to the TLV if found, or NULL if not found.
+     *
+     */
+    static Tlv *FindTlv(uint8_t *aTlvsStart, uint16_t aTlvsLength, Type aType)
+    {
+        return const_cast<Tlv *>(FindTlv(const_cast<const uint8_t *>(aTlvsStart), aTlvsLength, aType));
+    }
+
+    /**
+     * This static method searches in a given sequence of TLVs to find the first TLV with a given template Type.
+     *
+     * @param[in]  aTlvsStart  A pointer to the start of the sequence of TLVs to search within.
+     * @param[in]  aTlvsLength The length (number of bytes) in TLV sequence.
+     * @param[in]  aType       The TLV Type to search for.
+     *
+     * @returns A pointer to the TLV if found, or NULL if not found.
+     *
+     */
+    static const Tlv *FindTlv(const uint8_t *aTlvsStart, uint16_t aTlvsLength, Type aType);
+
+    /**
+     * This static template method searches in a given sequence of TLVs to find the first TLV with a give template
+     * `TlvType`.
+     *
+     * @param[in]  aTlvsStart  A pointer to the start of the sequence of TLVs to search within.
+     * @param[in]  aTlvsLength The length (number of bytes) in TLV sequence.
+     *
+     * @returns A pointer to the TLV if found, or NULL if not found.
+     *
+     */
+    template <typename TlvType> static TlvType *FindTlv(uint8_t *aTlvsStart, uint16_t aTlvsLength)
+    {
+        return static_cast<TlvType *>(FindTlv(aTlvsStart, aTlvsLength, static_cast<Tlv::Type>(TlvType::kType)));
+    }
+
+    /**
+     * This static template method searches in a given sequence of TLVs to find the first TLV with a give template
+     * `TlvType`.
+     *
+     * @param[in]  aTlvsStart  A pointer to the start of the sequence of TLVs to search within.
+     * @param[in]  aTlvsLength The length (number of bytes) in TLV sequence.
+     *
+     * @returns A pointer to the TLV if found, or NULL if not found.
+     *
+     */
+    template <typename TlvType> static const TlvType *FindTlv(const uint8_t *aTlvsStart, uint16_t aTlvsLength)
+    {
+        return static_cast<const TlvType *>(FindTlv(aTlvsStart, aTlvsLength, static_cast<Tlv::Type>(TlvType::kType)));
+    }
 
 } OT_TOOL_PACKED_END;
 
@@ -225,6 +290,11 @@ OT_TOOL_PACKED_BEGIN
 class ChannelTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kChannel, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -290,6 +360,11 @@ OT_TOOL_PACKED_BEGIN
 class PanIdTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kPanId, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -337,6 +412,11 @@ OT_TOOL_PACKED_BEGIN
 class ExtendedPanIdTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kExtendedPanId, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -384,6 +464,11 @@ OT_TOOL_PACKED_BEGIN
 class NetworkNameTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kNetworkName, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -406,18 +491,18 @@ public:
     /**
      * This method gets the Network Name value.
      *
-     * @returns The Network Name value (as `NetworkName::Data`).
+     * @returns The Network Name value (as `NameData`).
      *
      */
-    Mac::NetworkName::Data GetNetworkName(void) const;
+    Mac::NameData GetNetworkName(void) const;
 
     /**
      * This method sets the Network Name value.
      *
-     * @param[in] aNameData   A Network Name value (as `NetworkName::Data`).
+     * @param[in] aNameData   A Network Name value (as `NameData`).
      *
      */
-    void SetNetworkName(const Mac::NetworkName::Data &aNameData);
+    void SetNetworkName(const Mac::NameData &aNameData);
 
 private:
     char mNetworkName[Mac::NetworkName::kMaxSize];
@@ -431,6 +516,11 @@ OT_TOOL_PACKED_BEGIN
 class PskcTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kPskc, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -478,6 +568,11 @@ OT_TOOL_PACKED_BEGIN
 class NetworkMasterKeyTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kNetworkMasterKey, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -525,6 +620,11 @@ OT_TOOL_PACKED_BEGIN
 class NetworkKeySequenceTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kNetworkKeySequence, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -572,6 +672,11 @@ OT_TOOL_PACKED_BEGIN
 class MeshLocalPrefixTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kMeshLocalPrefix, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -627,6 +732,11 @@ OT_TOOL_PACKED_BEGIN
 class SteeringDataTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kSteeringData, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -760,6 +870,11 @@ OT_TOOL_PACKED_BEGIN
 class BorderAgentLocatorTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kBorderAgentLocator, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -809,7 +924,8 @@ class CommissionerIdTlv : public Tlv
 public:
     enum
     {
-        kMaxLength = 64, ///< maximum length (bytes)
+        kType      = kCommissionerId, ///< The TLV Type.
+        kMaxLength = 64,              ///< maximum length (bytes)
     };
 
     /**
@@ -866,6 +982,11 @@ OT_TOOL_PACKED_BEGIN
 class CommissionerSessionIdTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kCommissionerSessionId, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -913,6 +1034,11 @@ OT_TOOL_PACKED_BEGIN
 class SecurityPolicyTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kSecurityPolicy, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -986,6 +1112,11 @@ OT_TOOL_PACKED_BEGIN
 class ActiveTimestampTlv : public Tlv, public Timestamp
 {
 public:
+    enum
+    {
+        kType = kActiveTimestamp, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1015,6 +1146,11 @@ OT_TOOL_PACKED_BEGIN
 class StateTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kState, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1073,6 +1209,11 @@ OT_TOOL_PACKED_BEGIN
 class JoinerUdpPortTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kJoinerUdpPort, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1120,6 +1261,11 @@ OT_TOOL_PACKED_BEGIN
 class PendingTimestampTlv : public Tlv, public Timestamp
 {
 public:
+    enum
+    {
+        kType = kPendingTimestamp, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1149,6 +1295,11 @@ OT_TOOL_PACKED_BEGIN
 class DelayTimerTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kDelayTimer, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1374,6 +1525,11 @@ OT_TOOL_PACKED_BEGIN
 class ChannelMaskBaseTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kChannelMask, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1472,6 +1628,11 @@ OT_TOOL_PACKED_BEGIN
 class EnergyListTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kEnergyList, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1502,7 +1663,8 @@ class ProvisioningUrlTlv : public Tlv
 public:
     enum
     {
-        kMaxLength = OT_PROVISIONING_URL_MAX_SIZE, // Maximum number of chars in the Provisioning URL string.
+        kType      = kProvisioningUrl,             ///< The TLV Type.
+        kMaxLength = OT_PROVISIONING_URL_MAX_SIZE, ///< Maximum number of chars in the Provisioning URL string.
     };
 
     /**
@@ -1564,6 +1726,11 @@ OT_TOOL_PACKED_BEGIN
 class VendorNameTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kVendorName, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1628,6 +1795,11 @@ OT_TOOL_PACKED_BEGIN
 class VendorModelTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kVendorModel, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1692,6 +1864,11 @@ OT_TOOL_PACKED_BEGIN
 class VendorSwVersionTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kVendorSwVersion, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1756,6 +1933,11 @@ OT_TOOL_PACKED_BEGIN
 class VendorDataTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kVendorData, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -1820,6 +2002,11 @@ OT_TOOL_PACKED_BEGIN
 class VendorStackVersionTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kVendorStackVersion, ///< The TLV Type.
+    };
+
     /**
      * Default constructor.
      *
@@ -1981,6 +2168,11 @@ OT_TOOL_PACKED_BEGIN
 class UdpEncapsulationTlv : public ExtendedTlv
 {
 public:
+    enum
+    {
+        kType = MeshCoP::Tlv::kUdpEncapsulation, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -2061,6 +2253,11 @@ OT_TOOL_PACKED_BEGIN
 class DiscoveryRequestTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kDiscoveryRequest, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *
@@ -2148,6 +2345,11 @@ OT_TOOL_PACKED_BEGIN
 class DiscoveryResponseTlv : public Tlv
 {
 public:
+    enum
+    {
+        kType = kDiscoveryResponse, ///< The TLV Type.
+    };
+
     /**
      * This method initializes the TLV.
      *

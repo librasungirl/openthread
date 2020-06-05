@@ -134,45 +134,12 @@ public:
      */
     void SetType(Type aType) { ot::Tlv::SetType(static_cast<uint8_t>(aType)); }
 
-    /**
-     * This static method reads the requested TLV out of @p aMessage.
-     *
-     * @param[in]   aMessage    A reference to the message.
-     * @param[in]   aType       The Type value to search for.
-     * @param[in]   aMaxLength  Maximum number of bytes to read.
-     * @param[out]  aTlv        A reference to the TLV that will be copied to.
-     *
-     * @retval OT_ERROR_NONE       Successfully copied the TLV.
-     * @retval OT_ERROR_NOT_FOUND  Could not find the TLV with Type @p aType.
-     *
-     */
-    static otError GetTlv(const Message &aMessage, Type aType, uint16_t aMaxLength, Tlv &aTlv)
-    {
-        return ot::Tlv::Get(aMessage, static_cast<uint8_t>(aType), aMaxLength, aTlv);
-    }
-
-    /**
-     * This static method obtains the offset of a TLV within @p aMessage.
-     *
-     * @param[in]   aMessage    A reference to the message.
-     * @param[in]   aType       The Type value to search for.
-     * @param[out]  aOffset     A reference to the offset of the TLV.
-     *
-     * @retval OT_ERROR_NONE       Successfully copied the TLV.
-     * @retval OT_ERROR_NOT_FOUND  Could not find the TLV with Type @p aType.
-     *
-     */
-    static otError GetOffset(const Message &aMessage, Type aType, uint16_t &aOffset)
-    {
-        return ot::Tlv::GetOffset(aMessage, static_cast<uint8_t>(aType), aOffset);
-    }
-
 } OT_TOOL_PACKED_END;
 
 #if !OPENTHREAD_CONFIG_MLE_LONG_ROUTES_ENABLE
 
 /**
- * This class implements Source Address TLV generation and parsing.
+ * This class implements Route TLV generation and parsing.
  *
  */
 OT_TOOL_PACKED_BEGIN
@@ -187,7 +154,7 @@ public:
     {
         SetType(kRoute);
         SetLength(sizeof(*this) - sizeof(Tlv));
-        memset(mRouterIdMask, 0, sizeof(mRouterIdMask));
+        mRouterIdMask.Clear();
         memset(mRouteData, 0, sizeof(mRouteData));
     }
 
@@ -217,32 +184,29 @@ public:
     void SetRouterIdSequence(uint8_t aSequence) { mRouterIdSequence = aSequence; }
 
     /**
-     * This method clears the Router ID Mask.
+     * This method gets the Router ID Mask.
      *
      */
-    void ClearRouterIdMask(void) { memset(mRouterIdMask, 0, sizeof(mRouterIdMask)); }
+    const RouterIdSet &GetRouterIdMask(void) const { return mRouterIdMask; }
+
+    /**
+     * This method sets the Router ID Mask.
+     *
+     * @param[in]  aRouterIdSet The Router ID Mask to set.
+     *
+     */
+    void SetRouterIdMask(const RouterIdSet &aRouterIdSet) { mRouterIdMask = aRouterIdSet; }
 
     /**
      * This method indicates whether or not a Router ID bit is set.
      *
-     * @param[in]  aRouterId  The Router ID.
+     * @param[in]  aRouterId  The Router ID bit.
      *
      * @retval TRUE   If the Router ID bit is set.
      * @retval FALSE  If the Router ID bit is not set.
      *
      */
-    bool IsRouterIdSet(uint8_t aRouterId) const
-    {
-        return (mRouterIdMask[aRouterId / 8] & (0x80 >> (aRouterId % 8))) != 0;
-    }
-
-    /**
-     * This method sets the Router ID bit.
-     *
-     * @param[in]  aRouterId  The Router ID bit to set.
-     *
-     */
-    void SetRouterId(uint8_t aRouterId) { mRouterIdMask[aRouterId / 8] |= 0x80 >> (aRouterId % 8); }
+    bool IsRouterIdSet(uint8_t aRouterId) const { return mRouterIdMask.Contains(aRouterId); }
 
     /**
      * This method returns the Route Data Length value.
@@ -344,15 +308,15 @@ private:
         kRouteCostOffset      = 0,
         kRouteCostMask        = 0xf << kRouteCostOffset,
     };
-    uint8_t mRouterIdSequence;
-    uint8_t mRouterIdMask[BitVectorBytes(kMaxRouterId + 1)];
-    uint8_t mRouteData[kMaxRouterId + 1];
+    uint8_t     mRouterIdSequence;
+    RouterIdSet mRouterIdMask;
+    uint8_t     mRouteData[kMaxRouterId + 1];
 } OT_TOOL_PACKED_END;
 
 #else // OPENTHREAD_CONFIG_MLE_LONG_ROUTES_ENABLE
 
 /**
- * This class implements Source Address TLV generation and parsing.
+ * This class implements Route TLV generation and parsing.
  *
  */
 OT_TOOL_PACKED_BEGIN
@@ -395,10 +359,18 @@ public:
     void SetRouterIdSequence(uint8_t aSequence) { mRouterIdSequence = aSequence; }
 
     /**
-     * This method clears the Router ID Mask.
+     * This method gets the Router ID Mask.
      *
      */
-    void ClearRouterIdMask(void) { memset(mRouterIdMask, 0, sizeof(mRouterIdMask)); }
+    const RouterIdSet &GetRouterIdMask(void) const { return mRouterIdMask; }
+
+    /**
+     * This method sets the Router ID Mask.
+     *
+     * @param[in]  aRouterIdSet The Router ID Mask to set.
+     *
+     */
+    void SetRouterIdMask(const RouterIdSet &aRouterIdSet) { mRouterIdMask = aRouterIdSet; }
 
     /**
      * This method indicates whether or not a Router ID bit is set.
@@ -409,10 +381,7 @@ public:
      * @retval FALSE  If the Router ID bit is not set.
      *
      */
-    bool IsRouterIdSet(uint8_t aRouterId) const
-    {
-        return (mRouterIdMask[aRouterId / 8] & (0x80 >> (aRouterId % 8))) != 0;
-    }
+    bool IsRouterIdSet(uint8_t aRouterId) const { return mRouterIdMask.Contains(aRouterId); }
 
     /**
      * This method sets the Router ID bit.
@@ -420,7 +389,7 @@ public:
      * @param[in]  aRouterId  The Router ID bit to set.
      *
      */
-    void SetRouterId(uint8_t aRouterId) { mRouterIdMask[aRouterId / 8] |= 0x80 >> (aRouterId % 8); }
+    void SetRouterId(uint8_t aRouterId) { mRouterIdMask.Add(aRouterId); }
 
     /**
      * This method returns the Route Data Length value.
@@ -560,17 +529,17 @@ private:
         kRouteCostMask        = 0xf << kRouteCostOffset,
         kOddEntryOffset       = 4,
     };
-    uint8_t mRouterIdSequence;
-    uint8_t mRouterIdMask[BitVectorBytes(kMaxRouterId + 1)];
-    // Since we do hold 12 (compressible to 11) bits of data per router, each entry occupies 1.5 bytes, consecutively.
-    // First 4 bits are link qualities, remaining 8 bits are route cost.
+    uint8_t     mRouterIdSequence;
+    RouterIdSet mRouterIdMask;
+    // Since we do hold 12 (compressible to 11) bits of data per router, each entry occupies 1.5 bytes,
+    // consecutively. First 4 bits are link qualities, remaining 8 bits are route cost.
     uint8_t mRouteData[kMaxRouterId + 1 + kMaxRouterId / 2 + 1];
 } OT_TOOL_PACKED_END;
 
 #endif // OPENTHREAD_CONFIG_MLE_LONG_ROUTES_ENABLE
 
 /**
- * This class implements Source Address TLV generation and parsing.
+ * This class implements Leader Data TLV generation and parsing.
  *
  */
 OT_TOOL_PACKED_BEGIN
@@ -669,7 +638,7 @@ public:
 };
 
 /**
- * This class implements Source Address TLV generation and parsing.
+ * This class implements Connectivity TLV generation and parsing.
  *
  */
 OT_TOOL_PACKED_BEGIN

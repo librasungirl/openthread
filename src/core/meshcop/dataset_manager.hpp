@@ -134,7 +134,7 @@ public:
     /**
      * This method sends a MGMT_SET request to the Leader.
      *
-     * @param[in]  aDataset  The Operational Datset.
+     * @param[in]  aDataset  The Operational Dataset.
      * @param[in]  aTlvs     Any additional raw TLVs to include.
      * @param[in]  aLength   Number of bytes in @p aTlvs.
      *
@@ -163,6 +163,35 @@ public:
 
 protected:
     /**
+     * This class defines a generic Dataset TLV to read from a message.
+     *
+     */
+    OT_TOOL_PACKED_BEGIN
+    class DatasetTlv : public Tlv
+    {
+    public:
+        /**
+         * This method reads the Dataset TLV from a given message at a given offset.
+         *
+         * @param[in]  aMessage  A message to read the TLV from.
+         * @param[in]  aOffset   An offset into the message to read from.
+         *
+         * @retval OT_ERROR_NONE    The TLV was read successfully.
+         * @retval OT_ERROR_PARSE   The TLV was not well-formed and could not be parsed.
+         *
+         */
+        otError ReadFromMessage(const Message &aMessage, uint16_t aOffset);
+
+    private:
+        enum
+        {
+            kMaxValueSize = 16, // Maximum size of a Dataset TLV value (bytes).
+        };
+
+        uint8_t mValue[Dataset::kMaxValueSize];
+    } OT_TOOL_PACKED_END;
+
+    /**
      * This constructor initializes the object.
      *
      * @param[in]  aInstance      A reference to the OpenThread instance.
@@ -173,7 +202,7 @@ protected:
      *
      */
     DatasetManager(Instance &          aInstance,
-                   Tlv::Type           aType,
+                   Dataset::Type       aType,
                    const char *        aUriGet,
                    const char *        aUriSet,
                    TimerMilli::Handler aTimerHandler);
@@ -241,13 +270,6 @@ protected:
      */
     void HandleTimer(void);
 
-    /**
-     * This method re-defines template `Get<Type>()` as the `InstanceLocator` (base class) definition is shadowed by
-     * the public `Get(dataset)` methods in this class.
-     *
-     */
-    template <typename Type> inline Type &Get(void) const { return InstanceLocator::Get<Type>(); }
-
     DatasetLocal mLocal;
     Timestamp    mTimestamp;
     bool         mTimestampValid : 1;
@@ -256,21 +278,30 @@ private:
     static void HandleUdpReceive(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo);
     void        HandleUdpReceive(Coap::Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 
-    otError Register(void);
-    void    SendGetResponse(const Coap::Message &   aRequest,
-                            const Ip6::MessageInfo &aMessageInfo,
-                            uint8_t *               aTlvs,
-                            uint8_t                 aLength) const;
+    static void HandleCoapResponse(void *               aContext,
+                                   otMessage *          aMessage,
+                                   const otMessageInfo *aMessageInfo,
+                                   otError              aError);
+    void        HandleCoapResponse(void);
+
+    void SendSet(void);
+    void SendGetResponse(const Coap::Message &   aRequest,
+                         const Ip6::MessageInfo &aMessageInfo,
+                         uint8_t *               aTlvs,
+                         uint8_t                 aLength) const;
 
     enum
     {
-        kMaxDatasetTlvs = 16, // Maximum number of TLVs in an `otOperationalDataset`.
+        kMaxDatasetTlvs = 16,   // Maximum number of TLVs in an `otOperationalDataset`.
+        kDelayNoBufs    = 1000, // Milliseconds
     };
 
     TimerMilli mTimer;
 
     const char *mUriGet;
     const char *mUriSet;
+
+    bool mCoapPending : 1;
 
 #if OPENTHREAD_FTD
 public:
@@ -339,7 +370,7 @@ public:
      * @param[in]  aDataset  The Operational Dataset.
      *
      */
-    void Save(const Dataset &aDataset) { DatasetManager::Save(aDataset); }
+    void Save(const Dataset &aDataset) { IgnoreError(DatasetManager::Save(aDataset)); }
 
     /**
      * This method sets the Operational Dataset for the partition.

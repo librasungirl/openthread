@@ -29,6 +29,7 @@
 
 import binascii
 
+import ipaddress
 import ipv6
 import network_data
 import network_layer
@@ -438,7 +439,7 @@ def check_child_update_request_from_child(
     address_registration=CheckType.OPTIONAL,
     tlv_request_tlv=CheckType.OPTIONAL,
     active_timestamp=CheckType.OPTIONAL,
-    CIDs=[],
+    CIDs=(),
 ):
 
     command_msg.assertMleMessageContainsTlv(mle.Mode)
@@ -544,7 +545,7 @@ def check_child_update_response(
     response=CheckType.OPTIONAL,
     link_layer_frame_counter=CheckType.OPTIONAL,
     mle_frame_counter=CheckType.OPTIONAL,
-    CIDs=[],
+    CIDs=(),
 ):
     """Verify a properly formatted Child Update Response from parent
     """
@@ -567,7 +568,7 @@ def check_child_update_response(
         _check_address_registration(command_msg, CIDs)
 
 
-def _check_address_registration(command_msg, CIDs=[]):
+def _check_address_registration(command_msg, CIDs=()):
     addresses = command_msg.assertMleMessageContainsTlv(
         mle.AddressRegistration).addresses
     for cid in CIDs:
@@ -586,11 +587,59 @@ def get_sub_tlv(tlvs, tlv_type):
             return sub_tlv
 
 
-def check_address_registration_tlv(addr_reg_tlv, address_set):
-    """Verify all addresses contained in address_set are contained in add_reg_tlv
+def check_address_registration_tlv(
+    command_msg,
+    full_address,
+):
+    """Check whether or not a full IPv6 address in AddressRegistrationTlv.
     """
-    assert all(addr in addr_reg_tlv.addresses for addr in address_set
-              ), 'Some addresses are not included in AddressRegistration TLV'
+    found = False
+    addr = ipaddress.ip_address(full_address)
+    addresses = command_msg.assertMleMessageContainsTlv(
+        mle.AddressRegistration).addresses
+
+    for item in addresses:
+        if isinstance(item, mle.AddressFull) and ipaddress.ip_address(
+                item.ipv6_address) == addr:
+            found = True
+            break
+
+    return found
+
+
+def check_compressed_address_registration_tlv(command_msg,
+                                              cid,
+                                              iid,
+                                              cid_present_once=False):
+    '''Check whether or not a compressed IPv6 address in AddressRegistrationTlv.
+    note: only compare the iid part of the address.
+
+        Args:
+            command_msg (MleMessage) : The Mle message to check.
+            cid (int): The context id of the domain prefix.
+            iid (string): The Interface Identifier.
+            cid_present_once(boolean): True if cid entry should apprear only once in AR Tlv.
+                                       False otherwise.
+    '''
+    found = False
+    cid_cnt = 0
+
+    addresses = command_msg.assertMleMessageContainsTlv(
+        mle.AddressRegistration).addresses
+
+    for item in addresses:
+        if isinstance(item, mle.AddressCompressed):
+            if cid == item.cid:
+                cid_cnt = cid_cnt + 1
+                if iid == item.iid.hex():
+                    found = True
+                    break
+    assert found, 'Error: Expected (cid, iid):({},{}) Not Found'.format(
+        cid, iid)
+
+    assert cid_present_once == (
+        cid_cnt == 1), 'Error: Expected cid present {} but present {}'.format(
+            'once' if cid_present_once else '', cid_cnt)
 
 
 def assert_contains_tlv(tlvs, check_type, tlv_type):
@@ -726,7 +775,7 @@ class SinglePrefixCheck:
 
 class PrefixesCheck:
 
-    def __init__(self, prefix_cnt=0, prefix_check_list=[]):
+    def __init__(self, prefix_cnt=0, prefix_check_list=()):
         self._prefix_cnt = prefix_cnt
         self._prefix_check_list = prefix_check_list
 
@@ -747,7 +796,7 @@ class PrefixesCheck:
 
 class CommissioningDataCheck:
 
-    def __init__(self, stable=None, sub_tlv_type_list=[]):
+    def __init__(self, stable=None, sub_tlv_type_list=()):
         self._stable = stable
         self._sub_tlv_type_list = sub_tlv_type_list
 

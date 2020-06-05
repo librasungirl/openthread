@@ -42,25 +42,46 @@
 #include "coap/coap.hpp"
 #include "common/message.hpp"
 #include "mac/mac_types.hpp"
+#include "meshcop/meshcop_tlvs.hpp"
 
 namespace ot {
+
+class ThreadNetif;
+
 namespace MeshCoP {
 
 enum
 {
-    kMeshCoPMessagePriority = Message::kPriorityNet, ///< The priority for MeshCoP message
-    kBorderAgentUdpPort     = 49191,                 ///< UDP port of border agent service.
+    kBorderAgentUdpPort = 49191, ///< UDP port of border agent service.
 };
 
 /**
- * This function create Message for MeshCoP
+ * This function creates Message for MeshCoP.
  *
  */
 inline Coap::Message *NewMeshCoPMessage(Coap::CoapBase &aCoap)
 {
-    otMessageSettings settings = {true, static_cast<otMessagePriority>(kMeshCoPMessagePriority)};
-    return aCoap.NewMessage(&settings);
+    return aCoap.NewMessage(Message::Settings(Message::kWithLinkSecurity, Message::kPriorityNet));
 }
+
+/**
+ * This function generates PSKc.
+ *
+ * PSKc is used to establish the Commissioner Session.
+ *
+ * @param[in]  aPassPhrase   The commissioning passphrase.
+ * @param[in]  aNetworkName  The network name for PSKc computation.
+ * @param[in]  aExtPanId     The extended PAN ID for PSKc computation.
+ * @param[out] aPskc         A reference to a PSKc where the generated PSKc will be placed.
+ *
+ * @retval OT_ERROR_NONE          Successfully generate PSKc.
+ * @retval OT_ERROR_INVALID_ARGS  If the length of passphrase is out of range.
+ *
+ */
+otError GeneratePskc(const char *              aPassPhrase,
+                     const Mac::NetworkName &  aNetworkName,
+                     const Mac::ExtendedPanId &aExtPanId,
+                     Pskc &                    aPskc);
 
 /**
  * This function computes the Joiner ID from a factory-assigned IEEE EUI-64.

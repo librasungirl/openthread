@@ -320,12 +320,29 @@ public:
     void SetRouterDowngradeThreshold(uint8_t aThreshold) { mRouterDowngradeThreshold = aThreshold; }
 
     /**
+     * This method returns if the REED is expected to become Router soon.
+     *
+     * @retval TRUE   If the REED is going to become Router.
+     * @retval FALSE  Otherwise.
+     *
+     */
+    bool IsExpectedToBecomeRouter(void) const;
+
+    /**
      * This method removes a link to a neighbor.
      *
      * @param[in]  aNeighbor  A reference to the neighbor object.
      *
      */
     void RemoveNeighbor(Neighbor &aNeighbor);
+
+    /**
+     * This method invalidates a direct link to a neighboring router (due to failed link-layer acks).
+     *
+     * @param[in]  aRouter  A reference to the router object.
+     *
+     */
+    void RemoveRouterLink(Router &aRouter);
 
     /**
      * This method restores children information from non-volatile memory.
@@ -485,15 +502,14 @@ public:
     /**
      * This method checks if the destination is reachable.
      *
-     * @param[in]  aMeshSource  The RLOC16 of the source.
-     * @param[in]  aMeshDest    The RLOC16 of the destination.
-     * @param[in]  aIp6Header   A reference to the IPv6 header of the message.
+     * @param[in]  aMeshDest   The RLOC16 of the destination.
+     * @param[in]  aIp6Header  A reference to the IPv6 header of the message.
      *
-     * @retval OT_ERROR_NONE  The destination is reachable.
-     * @retval OT_ERROR_DROP  The destination is not reachable and the message should be dropped.
+     * @retval OT_ERROR_NONE      The destination is reachable.
+     * @retval OT_ERROR_NO_ROUTE  The destination is not reachable and the message should be dropped.
      *
      */
-    otError CheckReachability(uint16_t aMeshSource, uint16_t aMeshDest, Ip6::Header &aIp6Header);
+    otError CheckReachability(uint16_t aMeshDest, Ip6::Header &aIp6Header);
 
     /**
      * This method resolves 2-hop routing loops.
@@ -659,6 +675,39 @@ public:
     otError SendTimeSync(void);
 #endif
 
+#if OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
+    /**
+     * This method sets the delay before registering Backbone Router service.
+     *
+     * @param[in]  aDelay  The delay before registering Backbone Router service.
+     *
+     */
+    void SetBackboneRouterRegistrationDelay(uint8_t aDelay) { mBackboneRouterRegistrationDelay = aDelay; }
+#endif
+
+    /**
+     * This method gets the maximum number of IP addresses that each MTD child may register with this device as parent.
+     *
+     * @returns The maximum number of IP addresses that each MTD child may register with this device as parent.
+     *
+     */
+    uint8_t GetMaxChildIpAddresses(void) const;
+
+#if OPENTHREAD_CONFIG_REFERENCE_DEVICE_ENABLE
+    /**
+     * This method sets/restores the maximum number of IP addresses that each MTD child may register with this
+     * device as parent.
+     *
+     * @param[in]  aMaxIpAddresses  The maximum number of IP addresses that each MTD child may register with this
+     *                              device as parent. 0 to clear the setting and restore the default.
+     *
+     * @retval OT_ERROR_NONE           Successfully set/cleared the number.
+     * @retval OT_ERROR_INVALID_ARGS   If exceeds the allowed maximum number.
+     *
+     */
+    otError SetMaxChildIpAddresses(uint8_t aMaxIpAddresses);
+#endif
+
 private:
     enum
     {
@@ -674,11 +723,11 @@ private:
     otError AppendPendingDataset(Message &aMessage);
     otError GetChildInfo(Child &aChild, otChildInfo &aChildInfo);
     void    GetNeighborInfo(Neighbor &aNeighbor, otNeighborInfo &aNeighInfo);
-    otError RefreshStoredChildren(void);
+    void    RefreshStoredChildren(void);
     void    HandleDetachStart(void);
-    otError HandleChildStart(AttachMode aMode);
-    otError HandleLinkRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, Neighbor *aNeighbor);
-    otError HandleLinkAccept(const Message &         aMessage,
+    void    HandleChildStart(AttachMode aMode);
+    void    HandleLinkRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, Neighbor *aNeighbor);
+    void    HandleLinkAccept(const Message &         aMessage,
                              const Ip6::MessageInfo &aMessageInfo,
                              uint32_t                aKeySequence,
                              Neighbor *              aNeighbor);
@@ -687,23 +736,21 @@ private:
                              uint32_t                aKeySequence,
                              Neighbor *              aNeighbor,
                              bool                    aRequest);
-    otError HandleLinkAcceptAndRequest(const Message &         aMessage,
+    void    HandleLinkAcceptAndRequest(const Message &         aMessage,
                                        const Ip6::MessageInfo &aMessageInfo,
                                        uint32_t                aKeySequence,
                                        Neighbor *              aNeighbor);
     otError HandleAdvertisement(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, Neighbor *);
-    otError HandleParentRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
-    otError HandleChildIdRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, uint32_t aKeySequence);
-    otError HandleChildUpdateRequest(const Message &         aMessage,
-                                     const Ip6::MessageInfo &aMessageInfo,
-                                     uint32_t                aKeySequence);
-    otError HandleChildUpdateResponse(const Message &         aMessage,
-                                      const Ip6::MessageInfo &aMessageInfo,
-                                      uint32_t                aKeySequence,
-                                      Neighbor *              aNeighbor);
-    otError HandleDataRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, const Neighbor *aNeighbor);
-    void    HandleNetworkDataUpdateRouter(void);
-    otError HandleDiscoveryRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
+    void    HandleParentRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
+    void    HandleChildIdRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, uint32_t aKeySequence);
+    void HandleChildUpdateRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, uint32_t aKeySequence);
+    void HandleChildUpdateResponse(const Message &         aMessage,
+                                   const Ip6::MessageInfo &aMessageInfo,
+                                   uint32_t                aKeySequence,
+                                   Neighbor *              aNeighbor);
+    void HandleDataRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, const Neighbor *aNeighbor);
+    void HandleNetworkDataUpdateRouter(void);
+    void HandleDiscoveryRequest(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo);
 #if OPENTHREAD_CONFIG_TIME_SYNC_ENABLE
     void HandleTimeSync(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo, const Neighbor *aNeighbor);
 #endif
@@ -711,11 +758,11 @@ private:
     otError ProcessRouteTlv(const RouteTlv &aRoute);
     void    StopAdvertiseTimer(void);
     otError SendAddressSolicit(ThreadStatusTlv::Status aStatus);
-    otError SendAddressRelease(void);
+    void    SendAddressRelease(void);
     void    SendAddressSolicitResponse(const Coap::Message &   aRequest,
                                        const Router *          aRouter,
                                        const Ip6::MessageInfo &aMessageInfo);
-    otError SendAdvertisement(void);
+    void    SendAdvertisement(void);
     otError SendLinkAccept(const Ip6::MessageInfo &aMessageInfo,
                            Neighbor *              aNeighbor,
                            const RequestedTlvs &   aRequestedTlvs,
@@ -728,10 +775,7 @@ private:
                                     const uint8_t *         aTlvs,
                                     uint8_t                 aTlvsLength,
                                     const Challenge &       aChallenge);
-    otError SendDataResponse(const Ip6::Address &aDestination,
-                             const uint8_t *     aTlvs,
-                             uint8_t             aTlvsLength,
-                             uint16_t            aDelay);
+    void SendDataResponse(const Ip6::Address &aDestination, const uint8_t *aTlvs, uint8_t aTlvsLength, uint16_t aDelay);
     otError SendDiscoveryResponse(const Ip6::Address &aDestination, uint16_t aPanId);
 
     void    SetStateRouter(uint16_t aRloc16);
@@ -790,6 +834,7 @@ private:
     uint32_t mFixedLeaderPartitionId; ///< only for certification testing
     bool     mRouterEligible : 1;
     bool     mAddressSolicitPending : 1;
+    bool     mAddressSolicitRejected : 1;
 
     uint8_t mRouterId;
     uint8_t mPreviousRouterId;
@@ -803,6 +848,12 @@ private:
     uint8_t mRouterSelectionJitterTimeout; ///< The Timeout prior to request/release Router ID.
 
     int8_t mParentPriority; ///< The assigned parent priority value, -2 means not assigned.
+#if OPENTHREAD_CONFIG_BACKBONE_ROUTER_ENABLE
+    uint8_t mBackboneRouterRegistrationDelay; ///< Delay before registering Backbone Router service.
+#endif
+#if OPENTHREAD_CONFIG_REFERENCE_DEVICE_ENABLE
+    uint8_t mMaxChildIpAddresses;
+#endif
 
 #if OPENTHREAD_CONFIG_MLE_STEERING_DATA_SET_OOB_ENABLE
     MeshCoP::SteeringDataTlv mSteeringData;
@@ -831,6 +882,7 @@ public:
     uint8_t GetCost(uint16_t) { return 0; }
 
     otError RemoveNeighbor(Neighbor &) { return BecomeDetached(); }
+    void    RemoveRouterLink(Router &) { IgnoreError(BecomeDetached()); }
 
     Neighbor *GetNeighbor(const Mac::ExtAddress &aAddress) { return Mle::GetNeighbor(aAddress); }
     Neighbor *GetNeighbor(const Mac::Address &aAddress) { return Mle::GetNeighbor(aAddress); }
@@ -840,6 +892,11 @@ public:
     static bool IsRouterIdValid(uint8_t aRouterId) { return aRouterId <= kMaxRouterId; }
 
     otError SendChildUpdateRequest(void) { return Mle::SendChildUpdateRequest(); }
+
+    otError CheckReachability(uint16_t aMeshDest, Ip6::Header &aIp6Header)
+    {
+        return Mle::CheckReachability(aMeshDest, aIp6Header);
+    }
 };
 
 #endif // OPENTHREAD_MTD

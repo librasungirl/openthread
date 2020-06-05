@@ -39,6 +39,7 @@
 #include <openthread/platform/radio.h>
 
 #include "common/locator.hpp"
+#include "common/non_copyable.hpp"
 #include "mac/mac_frame.hpp"
 #include "utils/static_assert.hpp"
 
@@ -58,7 +59,7 @@ namespace ot {
  * This class represents an OpenThread radio abstraction.
  *
  */
-class Radio : public InstanceLocator
+class Radio : public InstanceLocator, private NonCopyable
 {
     friend class Instance;
 
@@ -237,10 +238,7 @@ public:
      * @param[in] aExtAddress  The IEEE 802.15.4 Extended Address stored in little-endian byte order.
      *
      */
-    void SetExtendedAddress(const Mac::ExtAddress &aExtAddress)
-    {
-        otPlatRadioSetExtendedAddress(GetInstance(), &aExtAddress);
-    }
+    void SetExtendedAddress(const Mac::ExtAddress &aExtAddress);
 
     /**
      * This method sets the Short Address for address filtering.
@@ -248,7 +246,37 @@ public:
      * @param[in] aShortAddress  The IEEE 802.15.4 Short Address.
      *
      */
-    void SetShortAddress(Mac::ShortAddress aShortAddress) { otPlatRadioSetShortAddress(GetInstance(), aShortAddress); }
+    void SetShortAddress(Mac::ShortAddress aShortAddress);
+
+    /**
+     * This method sets MAC key and key ID.
+     *
+     * @param[in] aKeyIdMode  MAC key ID mode.
+     * @param[in] aKeyId      Current MAC key index.
+     * @param[in] aPrevKey    The previous MAC key.
+     * @param[in] aCurrKey    The current MAC key.
+     * @param[in] aNextKey    The next MAC key.
+     *
+     */
+    void SetMacKey(uint8_t         aKeyIdMode,
+                   uint8_t         aKeyId,
+                   const Mac::Key &aPrevKey,
+                   const Mac::Key &aCurrKey,
+                   const Mac::Key &aNextKey)
+    {
+        otPlatRadioSetMacKey(GetInstance(), aKeyIdMode, aKeyId, &aPrevKey, &aCurrKey, &aNextKey);
+    }
+
+    /**
+     * This method sets the current MAC Frame Counter value.
+     *
+     * @param[in] aMacFrameCounter  The MAC Frame Counter value.
+     *
+     */
+    void SetMacFrameCounter(uint32_t aMacFrameCounter)
+    {
+        otPlatRadioSetMacFrameCounter(GetInstance(), aMacFrameCounter);
+    }
 
     /**
      * This method gets the radio's transmit power in dBm.

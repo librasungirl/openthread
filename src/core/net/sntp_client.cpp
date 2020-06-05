@@ -177,8 +177,8 @@ Message *Client::NewMessage(const Header &aHeader)
 {
     Message *message = NULL;
 
-    VerifyOrExit((message = mSocket.NewMessage(sizeof(aHeader))) != NULL);
-    message->Prepend(&aHeader, sizeof(aHeader));
+    VerifyOrExit((message = mSocket.NewMessage(sizeof(aHeader))) != NULL, OT_NOOP);
+    IgnoreError(message->Prepend(&aHeader, sizeof(aHeader)));
     message->SetOffset(0);
 
 exit:
@@ -229,7 +229,7 @@ otError Client::SendMessage(Message &aMessage, const Ip6::MessageInfo &aMessageI
     return mSocket.SendTo(aMessage, aMessageInfo);
 }
 
-otError Client::SendCopy(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo)
+void Client::SendCopy(const Message &aMessage, const Ip6::MessageInfo &aMessageInfo)
 {
     otError  error;
     Message *messageCopy = NULL;
@@ -243,12 +243,15 @@ otError Client::SendCopy(const Message &aMessage, const Ip6::MessageInfo &aMessa
 
 exit:
 
-    if (error != OT_ERROR_NONE && messageCopy != NULL)
+    if (error != OT_ERROR_NONE)
     {
-        messageCopy->Free();
-    }
+        otLogWarnIp6("Failed to send SNTP request: %s", otThreadErrorToString(error));
 
-    return error;
+        if (messageCopy != NULL)
+        {
+            messageCopy->Free();
+        }
+    }
 }
 
 Message *Client::FindRelatedQuery(const Header &aResponseHeader, QueryMetadata &aQueryMetadata)
@@ -356,10 +359,10 @@ void Client::HandleUdpReceive(Message &aMessage, const Ip6::MessageInfo &aMessag
     Message *     message  = NULL;
     uint64_t      unixTime = 0;
 
-    VerifyOrExit(aMessage.Read(aMessage.GetOffset(), sizeof(responseHeader), &responseHeader) ==
-                 sizeof(responseHeader));
+    VerifyOrExit(aMessage.Read(aMessage.GetOffset(), sizeof(responseHeader), &responseHeader) == sizeof(responseHeader),
+                 OT_NOOP);
 
-    VerifyOrExit((message = FindRelatedQuery(responseHeader, queryMetadata)) != NULL);
+    VerifyOrExit((message = FindRelatedQuery(responseHeader, queryMetadata)) != NULL, OT_NOOP);
 
     // Check if response came from the server.
     VerifyOrExit(responseHeader.GetMode() == Header::kModeServer, error = OT_ERROR_FAILED);

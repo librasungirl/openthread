@@ -476,9 +476,9 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_NETWORK_DATA>(
     uint8_t networkData[255];
     uint8_t networkDataLen = 255;
 
-    otBorderRouterGetNetData(mInstance,
-                             false, // Stable?
-                             networkData, &networkDataLen);
+    IgnoreError(otBorderRouterGetNetData(mInstance,
+                                         false, // Stable?
+                                         networkData, &networkDataLen));
 
     return mEncoder.WriteData(networkData, networkDataLen);
 }
@@ -488,9 +488,9 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_STABLE_NETWORK
     uint8_t networkData[255];
     uint8_t networkDataLen = 255;
 
-    otBorderRouterGetNetData(mInstance,
-                             true, // Stable?
-                             networkData, &networkDataLen);
+    IgnoreError(otBorderRouterGetNetData(mInstance,
+                                         true, // Stable?
+                                         networkData, &networkDataLen));
 
     return mEncoder.WriteData(networkData, networkDataLen);
 }
@@ -501,9 +501,9 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_LEADER_NETWORK
     uint8_t networkData[255];
     uint8_t networkDataLen = 255;
 
-    otNetDataGet(mInstance,
-                 false, // Stable?
-                 networkData, &networkDataLen);
+    IgnoreError(otNetDataGet(mInstance,
+                             false, // Stable?
+                             networkData, &networkDataLen));
 
     return mEncoder.WriteData(networkData, networkDataLen);
 }
@@ -513,9 +513,9 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_STABLE_LEADER_
     uint8_t networkData[255];
     uint8_t networkDataLen = 255;
 
-    otNetDataGet(mInstance,
-                 true, // Stable?
-                 networkData, &networkDataLen);
+    IgnoreError(otNetDataGet(mInstance,
+                             true, // Stable?
+                             networkData, &networkDataLen));
 
     return mEncoder.WriteData(networkData, networkDataLen);
 }
@@ -559,8 +559,8 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_PARENT>(void)
             int8_t averageRssi;
             int8_t lastRssi;
 
-            otThreadGetParentAverageRssi(mInstance, &averageRssi);
-            otThreadGetParentLastRssi(mInstance, &lastRssi);
+            IgnoreError(otThreadGetParentAverageRssi(mInstance, &averageRssi));
+            IgnoreError(otThreadGetParentLastRssi(mInstance, &lastRssi));
 
             SuccessOrExit(error = mEncoder.WriteEui64(parentInfo.mExtAddress));
             SuccessOrExit(error = mEncoder.WriteUint16(parentInfo.mRloc16));
@@ -662,7 +662,8 @@ exit:
         // the state of these ports, so we need to report
         // those incomplete changes via an asynchronous
         // change event.
-        WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_THREAD_ASSISTING_PORTS);
+        IgnoreError(
+            WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_THREAD_ASSISTING_PORTS));
     }
 
     return error;
@@ -691,7 +692,7 @@ exit:
 
     if (shouldRegisterWithLeader)
     {
-        otBorderRouterRegister(mInstance);
+        IgnoreError(otBorderRouterRegister(mInstance));
     }
 
     return error;
@@ -831,7 +832,7 @@ exit:
 
     if (shouldRegisterWithLeader)
     {
-        otServerRegister(mInstance);
+        IgnoreError(otServerRegister(mInstance));
     }
 
     return error;
@@ -926,7 +927,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_SERVER_LEADER_SERVICE
     {
         SuccessOrExit(error = mEncoder.OpenStruct());
 
-        SuccessOrExit(error = mEncoder.WriteUint8(cfg.mServiceID));
+        SuccessOrExit(error = mEncoder.WriteUint8(cfg.mServiceId));
         SuccessOrExit(error = mEncoder.WriteUint32(cfg.mEnterpriseNumber));
         SuccessOrExit(error = mEncoder.WriteDataWithLen(cfg.mServiceData, cfg.mServiceDataLength));
         SuccessOrExit(error = mEncoder.WriteBool(cfg.mServerConfig.mStable));
@@ -1091,7 +1092,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_ACTIVE_DATASET
 {
     otOperationalDataset dataset;
 
-    IgnoreReturnValue(otDatasetGetActive(mInstance, &dataset));
+    IgnoreError(otDatasetGetActive(mInstance, &dataset));
     return EncodeOperationalDataset(dataset);
 }
 
@@ -1099,7 +1100,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_THREAD_PENDING_DATASE
 {
     otOperationalDataset dataset;
 
-    IgnoreReturnValue(otDatasetGetPending(mInstance, &dataset));
+    IgnoreError(otDatasetGetPending(mInstance, &dataset));
     return EncodeOperationalDataset(dataset);
 }
 
@@ -1539,7 +1540,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_IPV6_ML_PREFIX>(void)
     const otMeshLocalPrefix *mlPrefix = otThreadGetMeshLocalPrefix(mInstance);
     otIp6Address             addr;
 
-    VerifyOrExit(mlPrefix != NULL); // If `mlPrefix` is NULL send empty response.
+    VerifyOrExit(mlPrefix != NULL, OT_NOOP); // If `mlPrefix` is NULL send empty response.
 
     memcpy(addr.mFields.m8, mlPrefix->m8, 8);
 
@@ -1574,7 +1575,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_IPV6_ML_ADDR>(void)
     otError             error = OT_ERROR_NONE;
     const otIp6Address *ml64  = otThreadGetMeshLocalEid(mInstance);
 
-    VerifyOrExit(ml64 != NULL);
+    VerifyOrExit(ml64 != NULL, OT_NOOP);
     SuccessOrExit(error = mEncoder.WriteIp6Address(*ml64));
 
 exit:
@@ -1586,7 +1587,7 @@ template <> otError NcpBase::HandlePropertyGet<SPINEL_PROP_IPV6_LL_ADDR>(void)
     otError             error   = OT_ERROR_NONE;
     const otIp6Address *address = otThreadGetLinkLocalIp6Address(mInstance);
 
-    VerifyOrExit(address != NULL);
+    VerifyOrExit(address != NULL, OT_NOOP);
     SuccessOrExit(error = mEncoder.WriteIp6Address(*address));
 
 exit:
@@ -2003,11 +2004,11 @@ template <> otError NcpBase::HandlePropertySet<SPINEL_PROP_JAM_DETECT_ENABLE>(vo
 
     if (enabled)
     {
-        otJamDetectionStart(mInstance, &NcpBase::HandleJamStateChange_Jump, this);
+        IgnoreError(otJamDetectionStart(mInstance, &NcpBase::HandleJamStateChange_Jump, this));
     }
     else
     {
-        otJamDetectionStop(mInstance);
+        IgnoreError(otJamDetectionStop(mInstance));
     }
 
 exit:
@@ -2673,7 +2674,7 @@ exit:
 
     if (error != OT_ERROR_NONE)
     {
-        WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_MAC_WHITELIST);
+        IgnoreError(WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_MAC_WHITELIST));
     }
 
     return error;
@@ -2731,7 +2732,7 @@ exit:
 
     if (error != OT_ERROR_NONE)
     {
-        WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_MAC_BLACKLIST);
+        IgnoreError(WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_MAC_BLACKLIST));
     }
 
     return error;
@@ -2794,7 +2795,7 @@ exit:
 
     if (error != OT_ERROR_NONE)
     {
-        WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_MAC_FIXED_RSS);
+        IgnoreError(WritePropertyValueIsFrame(SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0, SPINEL_PROP_MAC_FIXED_RSS));
     }
 
     return error;
@@ -3119,7 +3120,7 @@ void NcpBase::RegisterLegacyHandlers(const otNcpLegacyHandlers *aHandlers)
     mLegacyHandlers = aHandlers;
     bool isEnabled;
 
-    VerifyOrExit(mLegacyHandlers != NULL);
+    VerifyOrExit(mLegacyHandlers != NULL, OT_NOOP);
 
     isEnabled = (otThreadGetDeviceRole(mInstance) != OT_DEVICE_ROLE_DISABLED);
 
@@ -3394,9 +3395,12 @@ void NcpBase::HandleDatagramFromStack(otMessage *aMessage, void *aContext)
 
 void NcpBase::HandleDatagramFromStack(otMessage *aMessage)
 {
-    VerifyOrExit(aMessage != NULL);
+    VerifyOrExit(aMessage != NULL, OT_NOOP);
 
-    SuccessOrExit(otMessageQueueEnqueue(&mMessageQueue, aMessage));
+    // Do not forward frames larger than SPINEL payload size.
+    VerifyOrExit(otMessageGetLength(aMessage) <= SPINEL_FRAME_MAX_COMMAND_PAYLOAD_SIZE, otMessageFree(aMessage));
+
+    otMessageQueueEnqueue(&mMessageQueue, aMessage);
 
     // If there is no queued spinel command response, try to write/send
     // the datagram message immediately. If there is a queued response
@@ -3407,7 +3411,7 @@ void NcpBase::HandleDatagramFromStack(otMessage *aMessage)
 
     if (IsResponseQueueEmpty())
     {
-        IgnoreReturnValue(SendQueuedDatagramMessages());
+        IgnoreError(SendQueuedDatagramMessages());
     }
 
 exit:
@@ -3561,7 +3565,7 @@ void NcpBase::HandlePcapFrame(const otRadioFrame *aFrame, bool aIsTx)
     uint16_t flags  = 0;
     uint8_t  header = SPINEL_HEADER_FLAG | SPINEL_HEADER_IID_0;
 
-    VerifyOrExit(mPcapEnabled);
+    VerifyOrExit(mPcapEnabled, OT_NOOP);
 
     if (aIsTx)
     {
@@ -3603,7 +3607,7 @@ template <> otError NcpBase::HandlePropertySet<SPINEL_PROP_PHY_PCAP_ENABLED>(voi
     bool    enabled;
 
     SuccessOrExit(error = mDecoder.ReadBool(enabled));
-    VerifyOrExit(enabled != mPcapEnabled);
+    VerifyOrExit(enabled != mPcapEnabled, OT_NOOP);
 
     mPcapEnabled = enabled;
 
@@ -3663,7 +3667,7 @@ void NcpBase::ProcessThreadChangedFlags(void)
         {OT_CHANGED_SUPPORTED_CHANNEL_MASK, SPINEL_PROP_PHY_CHAN_SUPPORTED},
     };
 
-    VerifyOrExit(mThreadChangedFlags != 0);
+    VerifyOrExit(mThreadChangedFlags != 0, OT_NOOP);
 
     // If thread role has changed, check for possible "join" error.
 
@@ -3690,7 +3694,7 @@ void NcpBase::ProcessThreadChangedFlags(void)
             )
             {
                 mThreadChangedFlags &= ~static_cast<uint32_t>(OT_CHANGED_THREAD_PARTITION_ID);
-                otThreadSetEnabled(mInstance, false);
+                IgnoreError(otThreadSetEnabled(mInstance, false));
 
                 mChangedPropsSet.AddProperty(SPINEL_PROP_NET_STACK_UP);
                 mChangedPropsSet.AddLastStatus(SPINEL_STATUS_JOIN_FAILURE);
@@ -3700,7 +3704,7 @@ void NcpBase::ProcessThreadChangedFlags(void)
 
     // Convert OT_CHANGED flags to corresponding NCP property update.
 
-    for (unsigned i = 0; i < OT_ARRAY_LENGTH(kFlags); i++)
+    for (size_t i = 0; i < OT_ARRAY_LENGTH(kFlags); i++)
     {
         uint32_t threadFlag = kFlags[i].mThreadFlag;
 
@@ -3734,7 +3738,7 @@ void NcpBase::ProcessThreadChangedFlags(void)
             }
 
             mThreadChangedFlags &= ~threadFlag;
-            VerifyOrExit(mThreadChangedFlags != 0);
+            VerifyOrExit(mThreadChangedFlags != 0, OT_NOOP);
         }
     }
 

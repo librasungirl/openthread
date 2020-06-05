@@ -51,9 +51,8 @@ static const int kUsPerSecond     = 1000000; ///< Number of microseconds per sec
 static uint64_t sNow        = 0;  ///< Time of simulation.
 static int      sSockFd     = -1; ///< Socket used to communicating with simulator.
 static uint16_t sPortOffset = 0;  ///< Port offset for simulation.
-static int      sNodeId     = 0;  ///< Node id of this simulated device.
 
-void virtualTimeInit(void)
+void virtualTimeInit(uint16_t aNodeId)
 {
     struct sockaddr_in sockaddr;
     char *             offset;
@@ -81,13 +80,10 @@ void virtualTimeInit(void)
         sPortOffset *= kWellKnownNodeId;
     }
 
-    // node id is required for virtual time simulation
-    sNodeId = atoi(getenv("NODE_ID"));
-
-    sockaddr.sin_port        = htons(kBasePort + sPortOffset + sNodeId);
+    sockaddr.sin_port        = htons(kBasePort + sPortOffset + aNodeId);
     sockaddr.sin_addr.s_addr = INADDR_ANY;
 
-    sSockFd = SocketWithCloseExec(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    sSockFd = SocketWithCloseExec(AF_INET, SOCK_DGRAM, IPPROTO_UDP, kSocketBlock);
 
     if (sSockFd == -1)
     {
@@ -201,7 +197,7 @@ void virtualTimeProcess(otInstance *  aInstance,
     virtualTimeRadioSpinelProcess(aInstance, &event);
 }
 
-uint64_t platformGetTime(void)
+uint64_t otPlatTimeGet(void)
 {
     return sNow;
 }

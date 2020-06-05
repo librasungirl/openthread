@@ -440,4 +440,24 @@
 #define OPENTHREAD_CONFIG_LEGACY_ENABLE 0
 #endif
 
+/**
+ * @def OPENTHREAD_CONFIG_OTNS_ENABLE
+ *
+ * Define to 1 to enable OTNS interactions.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_OTNS_ENABLE
+#define OPENTHREAD_CONFIG_OTNS_ENABLE 0
+#endif
+
+/**
+ * @def OPENTHREAD_CONFIG_DUA_ENABLE
+ *
+ * Define as 1 to support Thread 1.2 Domain Unicast Address feature.
+ *
+ */
+#ifndef OPENTHREAD_CONFIG_DUA_ENABLE
+#define OPENTHREAD_CONFIG_DUA_ENABLE 0
+#endif
+
 #endif // OPENTHREAD_CORE_DEFAULT_CONFIG_H_

@@ -120,9 +120,11 @@
  *
  * Number of flash pages to use for OpenThread's non-volatile settings.
  *
+ * @note This define applies only for MDK-ARM Keil toolchain configuration.
+ *
  */
 #ifndef PLATFORM_FLASH_PAGE_NUM
-#define PLATFORM_FLASH_PAGE_NUM 4
+#define PLATFORM_FLASH_PAGE_NUM 2
 #endif
 
 /*******************************************************************************

@@ -314,9 +314,12 @@ public:
         kMacCmdGtsRequest                 = 9,
 
         kHeaderIeVendor       = 0x00,
+        kHeaderIeCsl          = 0x1a,
         kHeaderIeTermination2 = 0x7f,
 
         kInfoStringSize = 110, ///< Max chars needed for the info string representation (@sa ToInfoString()).
+
+        kImmAckLength = kFcfSize + kDsnSize + kFcsSize,
     };
 
     /**
@@ -378,6 +381,14 @@ public:
     uint16_t GetVersion(void) const { return GetFrameControlField() & kFcfFrameVersionMask; }
 
     /**
+     * This method returns if this IEEE 802.15.4 frame's version is 2015.
+     *
+     * @returns TRUE if version is 2015, FALSE otherwise.
+     *
+     */
+    bool IsVersion2015(void) const { return IsVersion2015(GetFrameControlField()); }
+
+    /**
      * This method indicates whether or not security is enabled.
      *
      * @retval TRUE   If security is enabled.
@@ -421,6 +432,15 @@ public:
     void SetAckRequest(bool aAckRequest);
 
     /**
+     * This method indicates whether or not the PanId Compression bit is set.
+     *
+     * @retval TRUE   If the PanId Compression bit is set.
+     * @retval FALSE  If the PanId Compression bit is not set.
+     *
+     */
+    bool IsPanIdCompressed(void) const { return (GetFrameControlField() & kFcfPanidCompression) != 0; }
+
+    /**
      * This method indicates whether or not IEs present.
      *
      * @retval TRUE   If IEs present.
@@ -446,6 +466,14 @@ public:
     void SetSequence(uint8_t aSequence) { GetPsdu()[kSequenceIndex] = aSequence; }
 
     /**
+     * This method indicates whether or not the Destination PAN ID is present.
+     *
+     * @returns TRUE if the Destination PAN ID is present, FALSE otherwise.
+     *
+     */
+    bool IsDstPanIdPresent(void) const { return IsDstPanIdPresent(GetFrameControlField()); }
+
+    /**
      * This method gets the Destination PAN Identifier.
      *
      * @param[out]  aPanId  The Destination PAN Identifier.
@@ -463,6 +491,14 @@ public:
      *
      */
     void SetDstPanId(PanId aPanId);
+
+    /**
+     * This method indicates whether or not the Destination Address is present for this object.
+     *
+     * @retval TRUE if the Destination Address is present, FALSE otherwise.
+     *
+     */
+    bool IsDstAddrPresent() const { return IsDstAddrPresent(GetFrameControlField()); }
 
     /**
      * This method gets the Destination Address.
@@ -499,12 +535,12 @@ public:
     void SetDstAddr(const Address &aAddress);
 
     /**
-     * This method indicates whether or not the Src PanId is present.
+     * This method indicates whether or not the Source Address is present for this object.
      *
-     * @returns TRUE if the Src PanId is present, FALSE otherwise.
+     * @retval TRUE if the Source Address is present, FALSE otherwise.
      *
      */
-    bool IsSrcPanIdPresent(uint16_t aFcf) const;
+    bool IsSrcPanIdPresent(void) const { return IsSrcPanIdPresent(GetFrameControlField()); };
 
     /**
      * This method gets the Source PAN Identifier.
@@ -525,6 +561,14 @@ public:
      *
      */
     otError SetSrcPanId(PanId aPanId);
+
+    /**
+     * This method indicates whether or not the Source Address is present for this object.
+     *
+     * @retval TRUE if the Source Address is present, FALSE otherwise.
+     *
+     */
+    bool IsSrcAddrPresent(void) const { return IsSrcAddrPresent(GetFrameControlField()); }
 
     /**
      * This method gets the Source Address.
@@ -559,6 +603,25 @@ public:
      *
      */
     void SetSrcAddr(const Address &aAddress);
+
+    /**
+     * This method gets the Security Control Field.
+     *
+     * @param[out]  aSecurityControlField  The Security Control Field.
+     *
+     * @retval OT_ERROR_NONE   Successfully retrieved the Security Level Identifier.
+     * @retval OT_ERROR_PARSE  Failed to find the security control field in the frame.
+     *
+     */
+    otError GetSecurityControlField(uint8_t &aSecurityControlField) const;
+
+    /**
+     * This method sets the Security Control Field.
+     *
+     * @param[in]  aSecurityControlField  The Security Control Field.
+     *
+     */
+    void SetSecurityControlField(uint8_t aSecurityControlField);
 
     /**
      * This method gets the Security Level Identifier.
@@ -864,6 +927,18 @@ public:
      *
      */
     const uint8_t *GetHeaderIe(uint8_t aIeId) const;
+
+#if OPENTHREAD_CONFIG_MAC_CSL_RECEIVER_ENABLE
+    /**
+     * This method finds CSL IE in the frame and modify its content.
+     *
+     * @param[in] aCslPeriod  CSL Period in CSL IE.
+     * @param[in] aCslPhase   CSL Phase in CSL IE.
+     *
+     */
+    void SetCslIe(uint16_t aCslPeriod, uint16_t aCslPhase);
+#endif // OPENTHREAD_CONFIG_MAC_CSL_RECEIVER_ENABLE
+
 #endif // OPENTHREAD_CONFIG_MAC_HEADER_IE_SUPPORT
 
     /**
@@ -890,10 +965,12 @@ public:
      */
     InfoString ToInfoString(void) const;
 
-private:
+protected:
     enum
     {
         kInvalidIndex  = 0xff,
+        kInvalidSize   = kInvalidIndex,
+        kMaxPsduSize   = kInvalidSize - 1,
         kSequenceIndex = kFcfSize,
     };
 
@@ -902,6 +979,7 @@ private:
     uint8_t  FindDstAddrIndex(void) const;
     uint8_t  FindSrcPanIdIndex(void) const;
     uint8_t  FindSrcAddrIndex(void) const;
+    uint8_t  SkipAddrFieldIndex(void) const;
     uint8_t  FindSecurityHeaderIndex(void) const;
     uint8_t  SkipSecurityHeaderIndex(void) const;
     uint8_t  FindPayloadIndex(void) const;
@@ -910,6 +988,16 @@ private:
 #endif
 
     static uint8_t GetKeySourceLength(uint8_t aKeyIdMode);
+
+    static bool IsDstAddrPresent(uint16_t aFcf) { return (aFcf & kFcfDstAddrMask) != kFcfDstAddrNone; }
+    static bool IsDstPanIdPresent(uint16_t aFcf);
+    static bool IsSrcAddrPresent(uint16_t aFcf) { return (aFcf & kFcfSrcAddrMask) != kFcfSrcAddrNone; }
+    static bool IsSrcPanIdPresent(uint16_t aFcf);
+    static bool IsVersion2015(uint16_t aFcf) { return (aFcf & kFcfFrameVersionMask) == kFcfFrameVersion2015; }
+
+    static uint8_t CalculateAddrFieldSize(uint16_t aFcf);
+    static uint8_t CalculateSecurityHeaderSize(uint8_t aSecurityControl);
+    static uint8_t CalculateMicSize(uint8_t aSecurityControl);
 };
 
 /**
@@ -919,6 +1007,8 @@ private:
 class RxFrame : public Frame
 {
 public:
+    friend class TxFrame;
+
     /**
      * This method returns the RSSI in dBm used for reception.
      *
@@ -1081,7 +1171,7 @@ public:
      * @returns The pointer to the key.
      *
      */
-    const uint8_t *GetAesKey(void) const { return mInfo.mTxInfo.mAesKey; }
+    const Mac::Key &GetAesKey(void) const { return *static_cast<const Mac::Key *>(mInfo.mTxInfo.mAesKey); }
 
     /**
      * This method sets the key used for frame encryption and authentication (AES CCM).
@@ -1089,7 +1179,7 @@ public:
      * @param[in]  aAesKey  The pointer to the key.
      *
      */
-    void SetAesKey(const uint8_t *aAesKey) { mInfo.mTxInfo.mAesKey = aAesKey; }
+    void SetAesKey(const Mac::Key &aAesKey) { mInfo.mTxInfo.mAesKey = &aAesKey; }
 
     /**
      * This method copies the PSDU and all attributes from another frame.
@@ -1110,6 +1200,27 @@ public:
      *
      */
     void ProcessTransmitAesCcm(const ExtAddress &aExtAddress);
+
+    /**
+     * This method indicates whether or not the frame has security processed.
+     *
+     * @retval TRUE   The frame already has security processed.
+     * @retval FALSE  The frame does not have security processed.
+     *
+     */
+    bool IsSecurityProcessed(void) const { return mInfo.mTxInfo.mIsSecurityProcessed; }
+
+    /**
+     * This method sets the security processed flag attribute.
+     *
+     * @param[in]  aIsSecurityProcessed  TRUE if the frame already has security processed.
+     *
+     */
+    void SetIsSecurityProcessed(bool aIsSecurityProcessed)
+    {
+        mInfo.mTxInfo.mIsSecurityProcessed = aIsSecurityProcessed;
+    }
+
 #if OPENTHREAD_CONFIG_TIME_SYNC_ENABLE
     /**
      * This method sets the Time IE offset.
@@ -1118,6 +1229,14 @@ public:
      *
      */
     void SetTimeIeOffset(uint8_t aOffset) { mInfo.mTxInfo.mIeInfo->mTimeIeOffset = aOffset; }
+
+    /**
+     * This method gets the Time IE offset.
+     *
+     * @returns The Time IE offset, 0 means no Time IE.
+     *
+     */
+    uint8_t GetTimeIeOffset(void) const { return mInfo.mTxInfo.mIeInfo->mTimeIeOffset; }
 
     /**
      * This method sets the offset to network time.
@@ -1138,6 +1257,29 @@ public:
      */
     void SetTimeSyncSeq(uint8_t aTimeSyncSeq) { mInfo.mTxInfo.mIeInfo->mTimeSyncSeq = aTimeSyncSeq; }
 #endif // OPENTHREAD_CONFIG_TIME_SYNC_ENABLE
+
+    /**
+     * Generate Imm-Ack in this frame object.
+     *
+     * @param[in]    aFrame             A reference to the frame received.
+     * @param[in]    aIsFramePending    Value of the ACK's frame pending bit.
+     *
+     */
+    void GenerateImmAck(const RxFrame &aFrame, bool aIsFramePending);
+
+    /**
+     * Generate Enh-Ack in this frame object.
+     *
+     * @param[in]    aFrame             A reference to the frame received.
+     * @param[in]    aIsFramePending    Value of the ACK's frame pending bit.
+     * @param[in]    aIeData            A pointer to the IE data portion of the ACK to be sent.
+     * @param[in]    aIeLength          The length of IE data portion of the ACK to be sent.
+     *
+     * @retval  OT_ERROR_NONE           Successfully generated Enh Ack.
+     * @retval  OT_ERROR_PARSE          @p aFrame has incorrect format.
+     *
+     */
+    otError GenerateEnhAck(const RxFrame &aFrame, bool aIsFramePending, const uint8_t *aIeData, uint8_t aIeLength);
 };
 
 OT_TOOL_PACKED_BEGIN
@@ -1312,18 +1454,18 @@ public:
     /**
      * This method gets the Network Name field.
      *
-     * @returns The Network Name field as `NetworkName::Data`.
+     * @returns The Network Name field as `NameData`.
      *
      */
-    NetworkName::Data GetNetworkName(void) const { return NetworkName::Data(mNetworkName, sizeof(mNetworkName)); }
+    NameData GetNetworkName(void) const { return NameData(mNetworkName, sizeof(mNetworkName)); }
 
     /**
      * This method sets the Network Name field.
      *
-     * @param[in]  aNameData  The Network Name (as a `NetworkName::Data`).
+     * @param[in]  aNameData  The Network Name (as a `NameData`).
      *
      */
-    void SetNetworkName(const NetworkName::Data &aNameData) { aNameData.CopyTo(mNetworkName, sizeof(mNetworkName)); }
+    void SetNetworkName(const NameData &aNameData) { aNameData.CopyTo(mNetworkName, sizeof(mNetworkName)); }
 
     /**
      * This method returns the Extended PAN ID field.
@@ -1354,6 +1496,51 @@ private:
     uint8_t       mFlags;
     char          mNetworkName[NetworkName::kMaxSize];
     ExtendedPanId mExtendedPanId;
+} OT_TOOL_PACKED_END;
+
+/**
+ * This class implements CSL IE data structure.
+ *
+ */
+OT_TOOL_PACKED_BEGIN
+class CslIe
+{
+public:
+    /**
+     * This method returns the CSL Period.
+     *
+     * @returns the CSL Period.
+     *
+     */
+    uint16_t GetPeriod(void) const { return Encoding::LittleEndian::HostSwap16(mPeriod); }
+
+    /**
+     * This method sets the CSL Period.
+     *
+     * @param[in]  aPeriod  The CSL Period.
+     *
+     */
+    void SetPeriod(uint16_t aPeriod) { mPeriod = Encoding::LittleEndian::HostSwap16(aPeriod); }
+
+    /**
+     * This method returns the CSL Phase.
+     *
+     * @returns the CSL Phase.
+     *
+     */
+    uint16_t GetPhase(void) const { return Encoding::LittleEndian::HostSwap16(mPhase); }
+
+    /**
+     * This method sets the CSL Phase.
+     *
+     * @param[in]  aPhase  The CSL Phase.
+     *
+     */
+    void SetPhase(uint16_t aPhase) { mPhase = Encoding::LittleEndian::HostSwap16(aPhase); }
+
+private:
+    uint16_t mPhase;
+    uint16_t mPeriod;
 } OT_TOOL_PACKED_END;
 
 /**

@@ -46,8 +46,12 @@
 #include <openthread/error.h>
 #include <openthread/instance.h>
 #include <openthread/openthread-system.h>
+#include <openthread/platform/time.h>
 
 #include "common/logging.hpp"
+
+#include "radio_url.hpp"
+#include "lib/platform/exit_code.h"
 
 /**
  * @def OPENTHREAD_POSIX_VIRTUAL_TIME
@@ -87,69 +91,11 @@ struct Event
     uint8_t  mData[OT_EVENT_DATA_MAX_SIZE];
 } OT_TOOL_PACKED_END;
 
-/**
- * This function converts an exit code into a string.
- *
- * @param[in]  aExitCode  An exit code.
- *
- * @returns  A string representation of an exit code.
- *
- */
-const char *otExitCodeToString(uint8_t aExitCode);
-
-/**
- * This macro checks for the specified condition, which is expected to commonly be true,
- * and both records exit status and terminates the program if the condition is false.
- *
- * @param[in]   aCondition  The condition to verify
- * @param[in]   aExitCode   The exit code.
- *
- */
-#define VerifyOrDie(aCondition, aExitCode)                                                                   \
-    do                                                                                                       \
-    {                                                                                                        \
-        if (!(aCondition))                                                                                   \
-        {                                                                                                    \
-            otLogCritPlat("%s() at %s:%d: %s", __func__, __FILE__, __LINE__, otExitCodeToString(aExitCode)); \
-            exit(aExitCode);                                                                                 \
-        }                                                                                                    \
-    } while (false)
-
-/**
- * This macro checks for the specified error code, which is expected to commonly be successful,
- * and both records exit status and terminates the program if the error code is unsuccessful.
- *
- * @param[in]  aError  An error code to be evaluated against OT_ERROR_NONE.
- *
- */
-#define SuccessOrDie(aError)             \
-    VerifyOrDie(aError == OT_ERROR_NONE, \
-                (aError == OT_ERROR_INVALID_ARGS ? OT_EXIT_INVALID_ARGUMENTS : OT_EXIT_FAILURE))
-
-/**
- * This macro unconditionally both records exit status and terminates the program.
- *
- * @param[in]   aExitCode   The exit code.
- *
- */
-#define DieNow(aExitCode) VerifyOrDie(false, aExitCode)
-
-/**
- * This macro unconditionally both records exit status and exit message and terminates the program.
- *
- * @param[in]   aMessage    The exit message.
- * @param[in]   aExitCode   The exit code.
- *
- */
-#define DieNowWithMessage(aMessage, aExitCode)                                                       \
-    do                                                                                               \
-    {                                                                                                \
-        fprintf(stderr, "exit(%d): %s line %d, %s, %s\r\n", aExitCode, __func__, __LINE__, aMessage, \
-                otExitCodeToString(aExitCode));                                                      \
-        otLogCritPlat("exit(%d): %s line %d, %s, %s", aExitCode, __func__, __LINE__, aMessage,       \
-                      otExitCodeToString(aExitCode));                                                \
-        exit(aExitCode);                                                                             \
-    } while (false)
+struct RadioProcessContext
+{
+    const fd_set *mReadFdSet;
+    const fd_set *mWriteFdSet;
+};
 
 /**
  * Unique node ID.
@@ -187,10 +133,18 @@ void platformAlarmProcess(otInstance *aInstance);
  */
 int32_t platformAlarmGetNext(void);
 
+#ifndef MS_PER_S
 #define MS_PER_S 1000
+#endif
+#ifndef US_PER_MS
 #define US_PER_MS 1000
-#define US_PER_S 1000000
+#endif
+#ifndef US_PER_S
+#define US_PER_S (MS_PER_S * US_PER_MS)
+#endif
+#ifndef NS_PER_US
 #define NS_PER_US 1000
+#endif
 
 /**
  * This function advances the alarm time by @p aDelta.
@@ -209,7 +163,7 @@ void platformAlarmAdvanceNow(uint64_t aDelta);
  * @param[in]  aPlatformConfig  Platform configuration structure.
  *
  */
-void platformRadioInit(const otPlatformConfig *aPlatformConfig);
+void platformRadioInit(otPosixRadioArguments *aArguments);
 
 /**
  * This function shuts down the radio service used by OpenThread.
@@ -321,8 +275,10 @@ void platformNetifProcess(const fd_set *aReadFdSet, const fd_set *aWriteFdSet, c
 /**
  * This function initialize virtual time simulation.
  *
+ * @params[in]  aNodeId     Node id of this simulated device.
+ *
  */
-void virtualTimeInit(void);
+void virtualTimeInit(uint16_t aNodeId);
 
 /**
  * This function deinitialize virtual time simulation.
@@ -395,14 +351,6 @@ void virtualTimeSendSleepEvent(const struct timeval *aTimeout);
 void virtualTimeRadioSpinelProcess(otInstance *aInstance, const struct Event *aEvent);
 
 /**
- * This function gets system time in microseconds without applying speed up factor.
- *
- * @returns System time in microseconds.
- *
- */
-uint64_t platformGetTime(void);
-
-/**
  * This function initializes platform UDP driver.
  *
  * @param[in]   aIfName   The name of Thread's platform network interface.
@@ -428,19 +376,26 @@ void platformUdpProcess(otInstance *aInstance, const fd_set *aReadSet);
  */
 void platformUdpUpdateFdSet(otInstance *aInstance, fd_set *aReadFdSet, int *aMaxFd);
 
+enum SocketBlockOption
+{
+    kSocketBlock,
+    kSocketNonBlock,
+};
+
 /**
  * This function creates a socket with SOCK_CLOEXEC flag set.
  *
- * @param[in]   aDomain     The communication domain.
- * @param[in]   aType       The semantics of communication.
- * @param[in]   aProtocol   The protocol to use.
+ * @param[in]   aDomain       The communication domain.
+ * @param[in]   aType         The semantics of communication.
+ * @param[in]   aProtocol     The protocol to use.
+ * @param[in]   aBlockOption  Whether to add nonblock flags.
  *
  * @returns The file descriptor of the created socket.
  *
  * @retval  -1  Failed to create socket.
  *
  */
-int SocketWithCloseExec(int aDomain, int aType, int aProtocol);
+int SocketWithCloseExec(int aDomain, int aType, int aProtocol, SocketBlockOption aBlockOption);
 
 #ifdef __cplusplus
 }

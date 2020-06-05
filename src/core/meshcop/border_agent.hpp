@@ -40,6 +40,7 @@
 
 #include "coap/coap.hpp"
 #include "common/locator.hpp"
+#include "common/notifier.hpp"
 #include "net/udp6.hpp"
 
 namespace ot {
@@ -63,7 +64,7 @@ public:
      * This method starts the Border Agent service.
      *
      * @retval OT_ERROR_NONE    Successfully started the Border Agent service.
-     * @retval OT_ERROR_ALREADY Already started.
+     * @retval OT_ERROR_ALREADY Border Agent is already started.
      *
      */
     otError Start(void);
@@ -71,7 +72,8 @@ public:
     /**
      * This method stops the Border Agent service.
      *
-     * @retval OT_ERROR_NONE  Successfully stopped the Border Agent service.
+     * @retval OT_ERROR_NONE    Successfully stopped the Border Agent service.
+     * @retval OT_ERROR_ALREADY Border Agent is already stopped.
      *
      */
     otError Stop(void);
@@ -84,7 +86,16 @@ public:
      */
     otBorderAgentState GetState(void) const { return mState; }
 
+    /**
+     * This method applies the Mesh Local Prefix.
+     *
+     */
+    void ApplyMeshLocalPrefix(void);
+
 private:
+    static void HandleStateChanged(Notifier::Callback &aCallback, otChangedFlags aFlags);
+    void        HandleStateChanged(otChangedFlags aFlags);
+
     static void HandleConnected(bool aConnected, void *aContext)
     {
         static_cast<BorderAgent *>(aContext)->HandleConnected(aConnected);
@@ -94,9 +105,9 @@ private:
     template <Coap::Resource BorderAgent::*aResource>
     static void HandleRequest(void *aContext, otMessage *aMessage, const otMessageInfo *aMessageInfo)
     {
-        static_cast<BorderAgent *>(aContext)->ForwardToLeader(
+        IgnoreError(static_cast<BorderAgent *>(aContext)->ForwardToLeader(
             *static_cast<Coap::Message *>(aMessage), *static_cast<const Ip6::MessageInfo *>(aMessageInfo),
-            (static_cast<BorderAgent *>(aContext)->*aResource).GetUriPath(), false, false);
+            (static_cast<BorderAgent *>(aContext)->*aResource).GetUriPath(), false, false));
     }
 
     static void HandleTimeout(Timer &aTimer);
@@ -151,6 +162,8 @@ private:
 
     TimerMilli         mTimer;
     otBorderAgentState mState;
+
+    Notifier::Callback mNotifierCallback;
 };
 
 } // namespace MeshCoP
