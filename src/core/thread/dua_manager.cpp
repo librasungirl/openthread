@@ -106,7 +106,7 @@ otError DuaManager::GenerateDomainUnicastAddressIid(void)
     }
     else
     {
-        otLogWarnIp6("Failed to generate valid DUA");
+        otLogWarnIp6("Generate DUA: %s", otThreadErrorToString(error));
     }
 
     return error;

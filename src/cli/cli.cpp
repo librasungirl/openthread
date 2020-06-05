@@ -620,11 +620,11 @@ void Interpreter::ProcessDua(uint8_t aArgsLength, char *aArgs[])
     {
     case 1:
     {
-        const otIp6InterfaceIdentifier *iid_ptr = otThreadGetFixedDuaInterfaceIdentifier(mInstance);
+        const otIp6InterfaceIdentifier *iid = otThreadGetFixedDuaInterfaceIdentifier(mInstance);
 
-        if (iid_ptr != NULL)
+        if (iid != NULL)
         {
-            OutputBytes(iid_ptr->m8, sizeof(otIp6InterfaceIdentifier));
+            OutputBytes(iid->m8, sizeof(otIp6InterfaceIdentifier));
             mServer->OutputFormat("\r\n");
         }
         break;
@@ -637,6 +637,7 @@ void Interpreter::ProcessDua(uint8_t aArgsLength, char *aArgs[])
         else
         {
             otIp6InterfaceIdentifier iid;
+
             VerifyOrExit(Hex2Bin(aArgs[1], iid.m8, sizeof(otIp6InterfaceIdentifier)) ==
                              sizeof(otIp6InterfaceIdentifier),
                          error = OT_ERROR_INVALID_ARGS);
