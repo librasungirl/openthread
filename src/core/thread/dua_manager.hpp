@@ -128,8 +128,8 @@ private:
     otError GenerateDomainUnicastAddressIid(void);
 
     Ip6::NetifUnicastAddress mDomainUnicastAddress;
-    uint8_t                  mDadCounter;
     Ip6::InterfaceIdentifier mFixedDuaInterfaceIdentifier;
+    uint8_t                  mDadCounter;
 };
 
 } // namespace ot
