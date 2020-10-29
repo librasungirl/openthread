@@ -2003,6 +2003,42 @@ void Interpreter::HandleLinkMetricsMgmtResponse(const otIp6Address *aAddress, ui
     OutputLine("Status: %s", LinkMetricsStatusToStr(aStatus));
 }
 
+void Interpreter::HandleLinkMetricsEnhAckProbingIe(const otShortAddress       aShortAddress,
+                                                   const otExtAddress *       aExtAddress,
+                                                   const otLinkMetricsValues *aMetricsValues,
+                                                   void *                     aContext)
+{
+    static_cast<Interpreter *>(aContext)->HandleLinkMetricsEnhAckProbingIe(aShortAddress, aExtAddress, aMetricsValues);
+}
+
+void Interpreter::HandleLinkMetricsEnhAckProbingIe(const otShortAddress       aShortAddress,
+                                                   const otExtAddress *       aExtAddress,
+                                                   const otLinkMetricsValues *aMetricsValues)
+{
+    const char kLinkMetricsTypeAverage[] = "(Exponential Moving Average)";
+
+    OutputFormat("Received Link Metrics data in Enh Ack from neighbor, short address:0x%02x , extened address:",
+                 aShortAddress);
+    OutputExtAddress(*aExtAddress);
+    OutputLine("");
+
+    if (aMetricsValues != nullptr)
+    {
+        if (aMetricsValues->mMetrics.mLqi)
+        {
+            OutputLine(" - LQI: %d %s", aMetricsValues->mLqiValue, kLinkMetricsTypeAverage);
+        }
+        if (aMetricsValues->mMetrics.mLinkMargin)
+        {
+            OutputLine(" - Margin: %d (dB) %s", aMetricsValues->mLinkMarginValue, kLinkMetricsTypeAverage);
+        }
+        if (aMetricsValues->mMetrics.mRssi)
+        {
+            OutputLine(" - RSSI: %d (dBm) %s", aMetricsValues->mRssiValue, kLinkMetricsTypeAverage);
+        }
+    }
+}
+
 const char *Interpreter::LinkMetricsStatusToStr(uint8_t aStatus)
 {
     uint8_t            strIndex                = 0;
@@ -2192,6 +2228,40 @@ otError Interpreter::ProcessLinkMetricsMgmt(uint8_t aArgsLength, char *aArgs[])
         error = otLinkMetricsConfigForwardTrackingSeries(mInstance, &address, seriesId, seriesFlags,
                                                          clear ? nullptr : &linkMetrics,
                                                          &Interpreter::HandleLinkMetricsMgmtResponse, this);
+    }
+    else if (strcmp(aArgs[1], "enhanced-ack") == 0)
+    {
+        otLinkMetricsEnhAckFlags enhAckFlags;
+        otLinkMetrics            linkMetrics;
+        otLinkMetrics *          pLinkMetrics = &linkMetrics;
+
+        VerifyOrExit(aArgsLength >= 3);
+
+        if (strcmp(aArgs[2], "clear") == 0)
+        {
+            enhAckFlags  = OT_LINK_METRICS_ENH_ACK_CLEAR;
+            pLinkMetrics = nullptr;
+        }
+        else if (strcmp(aArgs[2], "register") == 0)
+        {
+            enhAckFlags = OT_LINK_METRICS_ENH_ACK_REGISTER;
+            VerifyOrExit(aArgsLength >= 4);
+            SuccessOrExit(error = ParseLinkMetricsFlags(linkMetrics, aArgs[3]));
+#if OPENTHREAD_CONFIG_REFERENCE_DEVICE_ENABLE
+            if (aArgsLength > 4 && strcmp(aArgs[4], "r") == 0)
+            {
+                linkMetrics.mReserved = true;
+            }
+#endif
+        }
+        else
+        {
+            ExitNow(error = OT_ERROR_INVALID_ARGS);
+        }
+
+        error = otLinkMetricsConfigEnhAckProbing(mInstance, &address, enhAckFlags, pLinkMetrics,
+                                                 &Interpreter::HandleLinkMetricsMgmtResponse, this,
+                                                 &Interpreter::HandleLinkMetricsEnhAckProbingIe, this);
     }
 
 exit:

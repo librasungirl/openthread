@@ -571,6 +571,15 @@ private:
 
     void HandleLinkMetricsMgmtResponse(const otIp6Address *aAddress, uint8_t aStatus);
 
+    static void HandleLinkMetricsEnhAckProbingIe(otShortAddress             aShortAddress,
+                                                 const otExtAddress *       aExtAddress,
+                                                 const otLinkMetricsValues *aMetricsValues,
+                                                 void *                     aContext);
+
+    void HandleLinkMetricsEnhAckProbingIe(otShortAddress             aShortAddress,
+                                          const otExtAddress *       aExtAddress,
+                                          const otLinkMetricsValues *aMetricsValues);
+
     const char *LinkMetricsStatusToStr(uint8_t aStatus);
 #endif
 

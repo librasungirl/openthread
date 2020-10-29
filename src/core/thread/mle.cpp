@@ -2441,7 +2441,7 @@ exit:
 }
 
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
-otError Mle::SendLinkMetricsManagementResponse(const Ip6::Address &aDestination, otLinkMetricsStatus aStatus)
+otError Mle::SendLinkMetricsManagementResponse(const Ip6::Address &aDestination, LinkMetrics::LinkMetricsStatus aStatus)
 {
     otError  error = OT_ERROR_NONE;
     Message *message;
@@ -3752,8 +3752,8 @@ void Mle::HandleLinkMetricsManagementRequest(const Message &         aMessage,
                                              const Ip6::MessageInfo &aMessageInfo,
                                              Neighbor *              aNeighbor)
 {
-    otError             error = OT_ERROR_NONE;
-    otLinkMetricsStatus status;
+    otError                        error = OT_ERROR_NONE;
+    LinkMetrics::LinkMetricsStatus status;
 
     Log(kMessageReceive, kTypeLinkMetricsManagementRequest, aMessageInfo.GetPeerAddr());
 

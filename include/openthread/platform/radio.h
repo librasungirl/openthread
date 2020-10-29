@@ -322,6 +322,19 @@ typedef struct otRadioCoexMetrics
 } otRadioCoexMetrics;
 
 /**
+ * This structure represents what metrics are specified to query.
+ *
+ */
+typedef struct otLinkMetrics
+{
+    bool mPduCount : 1;
+    bool mLqi : 1;
+    bool mLinkMargin : 1;
+    bool mRssi : 1;
+    bool mReserved : 1;
+} otLinkMetrics;
+
+/**
  * @}
  *
  */
@@ -961,6 +974,31 @@ void otPlatRadioUpdateCslSampleTime(otInstance *aInstance, uint32_t aCslSampleTi
  *
  */
 otError otPlatRadioSetChannelMaxTransmitPower(otInstance *aInstance, uint8_t aChannel, int8_t aMaxPower);
+
+/**
+ * Enable/disable or update Enhanced-ACK Based Probing in radio for a specific Initiator.
+ *
+ * After Enhanced-ACK Based Probing is configured by a specific Probing Initiator, the Enhanced-ACK sent to that
+ * node should include Vendor-Specific IE containing Link Metrics data. This method informs the radio to start/stop to
+ * collect and aggregate Link Metrics data and include Vendor-Specific IE that containing the data in Enhanced-ACK sent
+ * to that Probing Initiator.
+ *
+ * @param[in]  aInstance     The OpenThread instance structure.
+ * @param[in]  aLinkMetrics  This parameter specifies what metrics to query. Per spec 4.11.3.4.4.6, at most 2 metrics
+ *                           can be specified. The probing would be disabled if @p `aLinkMetrics` is bitwise 0.
+ * @param[in]  aShortAddr    The short address of the the probing Initiator.
+ * @param[in]  aExtAddr      The extended source address of the probing Initiator. @p aExtAddr MUST NOT be `NULL`.
+ *
+ * @retval OT_ERROR_NONE           Successfully enable/disable or update Enhanced-ACK Based Probing for a specific
+ *                                 Initiator.
+ * @retval OT_ERROR_INVALID_ARGS   @p aDataLength or @p aExtAddr is not valid.
+ * @retval OT_ERROR_NOT_SUPPORTED  Radio driver doesn't support Enhanced-ACK Probing.
+ *
+ */
+otError otPlatRadioConfigureEnhAckProbing(otInstance *        aInstance,
+                                          otLinkMetrics       aLinkMetrics,
+                                          otShortAddress      aShortAddress,
+                                          const otExtAddress *aExtAddress);
 
 /**
  * @}

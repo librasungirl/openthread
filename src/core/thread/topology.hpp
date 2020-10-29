@@ -639,11 +639,27 @@ public:
     LinkMetricsSeriesInfo *RemoveForwardTrackingSeriesInfo(const uint8_t &aSeriesId);
 
     /**
-     * This method removes all the Series and return the data structures to the Pool
+     * This method removes all the Series and return the data structures to the Pool.
      *
      */
     void RemoveAllForwardTrackingSeriesInfo(void);
 
+    /**
+     * This method gets the Enh-ACK Probing metrics (this `Neighbor` object is the Probing Subject).
+     *
+     */
+    otLinkMetrics GetEnhAckProbingMetrics(void) const { return mEnhAckProbingMetrics; }
+
+    /**
+     * This method sets the Enh-ACK Probing metrics (this `Neighbor` object is the Probing Subject).
+     *
+     * @param[in]  aEnhAckProbingMetrics  The metrics value to set.
+     *
+     */
+    void SetEnhAckProbingMetrics(const otLinkMetrics &aEnhAckProbingMetrics)
+    {
+        mEnhAckProbingMetrics = aEnhAckProbingMetrics;
+    };
 #endif
 protected:
     /**
@@ -688,6 +704,8 @@ private:
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
     LinkedList<LinkMetricsSeriesInfo> mLinkMetricsSeriesInfoList; ///< A list of Link Metrics Forward Tracking Series
                                                                   ///< that is being tracked for this neighbor.
+    otLinkMetrics mEnhAckProbingMetrics; ///< The metrics configured for Enh-ACK Based Probing for the Probing Subject
+                                         ///< (this neighbor).
 #endif
 };
 

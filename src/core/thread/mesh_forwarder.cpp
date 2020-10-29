@@ -149,7 +149,10 @@ exit:
     return;
 }
 
-void MeshForwarder::PrepareEmptyFrame(Mac::TxFrame &aFrame, const Mac::Address &aMacDest, bool aAckRequest)
+void MeshForwarder::PrepareEmptyFrame(Mac::TxFrame &      aFrame,
+                                      const Mac::Address &aMacDest,
+                                      bool                aAckRequest,
+                                      bool                aEnforceVersion2015)
 {
     uint16_t fcf = 0;
 
@@ -171,6 +174,10 @@ void MeshForwarder::PrepareEmptyFrame(Mac::TxFrame &aFrame, const Mac::Address &
     fcf |= (aMacDest.IsShort()) ? Mac::Frame::kFcfDstAddrShort : Mac::Frame::kFcfDstAddrExt;
     fcf |= (macSource.IsShort()) ? Mac::Frame::kFcfSrcAddrShort : Mac::Frame::kFcfSrcAddrExt;
     Get<Mac::Mac>().UpdateFrameControlField(nullptr, false, fcf);
+    if (aEnforceVersion2015)
+    {
+        fcf = (fcf & ~Mac::Frame::kFcfFrameVersionMask) | Mac::Frame::kFcfFrameVersion2015;
+    }
 
     aFrame.InitMacHeader(fcf, Mac::Frame::kKeyIdMode1 | Mac::Frame::kSecEncMic32);
 
@@ -504,7 +511,7 @@ otError MeshForwarder::HandleFrameRequest(Mac::TxFrame &aFrame)
         Mac::Address macDestAddr;
 
         macDestAddr.SetShort(Get<Mle::MleRouter>().GetParent().GetRloc16());
-        PrepareEmptyFrame(aFrame, macDestAddr, /* aAckRequest */ true);
+        PrepareEmptyFrame(aFrame, macDestAddr, /* aAckRequest */ true, /* aEnforceVersion2015 */ true);
     }
     break;
 #endif
