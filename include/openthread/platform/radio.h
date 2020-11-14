@@ -327,11 +327,11 @@ typedef struct otRadioCoexMetrics
  */
 typedef struct otLinkMetrics
 {
-    bool mPduCount : 1;
-    bool mLqi : 1;
-    bool mLinkMargin : 1;
-    bool mRssi : 1;
-    bool mReserved : 1;
+    bool mPduCount : 1;   ///< Pdu count.
+    bool mLqi : 1;        ///< Link Quality Indicator.
+    bool mLinkMargin : 1; ///< Link Margin.
+    bool mRssi : 1;       ///< Received Signal Strength Indicator.
+    bool mReserved : 1;   ///< Reserved, this is for reference device.
 } otLinkMetrics;
 
 /**
@@ -986,8 +986,8 @@ otError otPlatRadioSetChannelMaxTransmitPower(otInstance *aInstance, uint8_t aCh
  * @param[in]  aInstance     The OpenThread instance structure.
  * @param[in]  aLinkMetrics  This parameter specifies what metrics to query. Per spec 4.11.3.4.4.6, at most 2 metrics
  *                           can be specified. The probing would be disabled if @p `aLinkMetrics` is bitwise 0.
- * @param[in]  aShortAddr    The short address of the the probing Initiator.
- * @param[in]  aExtAddr      The extended source address of the probing Initiator. @p aExtAddr MUST NOT be `NULL`.
+ * @param[in]  aShortAddr    The short address of the Probing Initiator.
+ * @param[in]  aExtAddr      The extended source address of the Probing Initiator. @p aExtAddr MUST NOT be `NULL`.
  *
  * @retval OT_ERROR_NONE           Successfully enable/disable or update Enhanced-ACK Based Probing for a specific
  *                                 Initiator.

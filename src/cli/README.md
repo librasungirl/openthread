@@ -1130,7 +1130,7 @@ Done
 
 Send a Link Metrics Management Request to clear an Enhanced-ACK Based Probing.
 
-- ipaddr: Peer address.
+- ipaddr: Peer address (SHOULD be link local address of the neighboring device).
 
 ```bash
 > linkmetrics mgmt fe80:0:0:0:3092:f334:1455:1ad2 enhanced-ack clear

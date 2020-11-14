@@ -1950,38 +1950,43 @@ void Interpreter::HandleLinkMetricsReport(const otIp6Address *       aAddress,
     static_cast<Interpreter *>(aContext)->HandleLinkMetricsReport(aAddress, aMetricsValues, aStatus);
 }
 
-void Interpreter::HandleLinkMetricsReport(const otIp6Address *       aAddress,
-                                          const otLinkMetricsValues *aMetricsValues,
-                                          uint8_t                    aStatus)
+void Interpreter::PrintLinkMetricsValue(const otLinkMetricsValues *aMetricsValues)
 {
     const char kLinkMetricsTypeCount[]   = "(Count/Summation)";
     const char kLinkMetricsTypeAverage[] = "(Exponential Moving Average)";
 
+    if (aMetricsValues->mMetrics.mPduCount)
+    {
+        OutputLine(" - PDU Counter: %d %s", aMetricsValues->mPduCountValue, kLinkMetricsTypeCount);
+    }
+
+    if (aMetricsValues->mMetrics.mLqi)
+    {
+        OutputLine(" - LQI: %d %s", aMetricsValues->mLqiValue, kLinkMetricsTypeAverage);
+    }
+
+    if (aMetricsValues->mMetrics.mLinkMargin)
+    {
+        OutputLine(" - Margin: %d (dB) %s", aMetricsValues->mLinkMarginValue, kLinkMetricsTypeAverage);
+    }
+
+    if (aMetricsValues->mMetrics.mRssi)
+    {
+        OutputLine(" - RSSI: %d (dBm) %s", aMetricsValues->mRssiValue, kLinkMetricsTypeAverage);
+    }
+}
+
+void Interpreter::HandleLinkMetricsReport(const otIp6Address *       aAddress,
+                                          const otLinkMetricsValues *aMetricsValues,
+                                          uint8_t                    aStatus)
+{
     OutputFormat("Received Link Metrics Report from: ");
     OutputIp6Address(*aAddress);
     OutputLine("");
 
     if (aMetricsValues != nullptr)
     {
-        if (aMetricsValues->mMetrics.mPduCount)
-        {
-            OutputLine(" - PDU Counter: %d %s", aMetricsValues->mPduCountValue, kLinkMetricsTypeCount);
-        }
-
-        if (aMetricsValues->mMetrics.mLqi)
-        {
-            OutputLine(" - LQI: %d %s", aMetricsValues->mLqiValue, kLinkMetricsTypeAverage);
-        }
-
-        if (aMetricsValues->mMetrics.mLinkMargin)
-        {
-            OutputLine(" - Margin: %d (dB) %s", aMetricsValues->mLinkMarginValue, kLinkMetricsTypeAverage);
-        }
-
-        if (aMetricsValues->mMetrics.mRssi)
-        {
-            OutputLine(" - RSSI: %d (dBm) %s", aMetricsValues->mRssiValue, kLinkMetricsTypeAverage);
-        }
+        PrintLinkMetricsValue(aMetricsValues);
     }
     else
     {
@@ -2015,27 +2020,14 @@ void Interpreter::HandleLinkMetricsEnhAckProbingIe(const otShortAddress       aS
                                                    const otExtAddress *       aExtAddress,
                                                    const otLinkMetricsValues *aMetricsValues)
 {
-    const char kLinkMetricsTypeAverage[] = "(Exponential Moving Average)";
-
-    OutputFormat("Received Link Metrics data in Enh Ack from neighbor, short address:0x%02x , extened address:",
+    OutputFormat("Received Link Metrics data in Enh Ack from neighbor, short address:0x%02x , extended address:",
                  aShortAddress);
     OutputExtAddress(*aExtAddress);
     OutputLine("");
 
     if (aMetricsValues != nullptr)
     {
-        if (aMetricsValues->mMetrics.mLqi)
-        {
-            OutputLine(" - LQI: %d %s", aMetricsValues->mLqiValue, kLinkMetricsTypeAverage);
-        }
-        if (aMetricsValues->mMetrics.mLinkMargin)
-        {
-            OutputLine(" - Margin: %d (dB) %s", aMetricsValues->mLinkMarginValue, kLinkMetricsTypeAverage);
-        }
-        if (aMetricsValues->mMetrics.mRssi)
-        {
-            OutputLine(" - RSSI: %d (dBm) %s", aMetricsValues->mRssiValue, kLinkMetricsTypeAverage);
-        }
+        PrintLinkMetricsValue(aMetricsValues);
     }
 }
 
@@ -2256,7 +2248,7 @@ otError Interpreter::ProcessLinkMetricsMgmt(uint8_t aArgsLength, char *aArgs[])
         }
         else
         {
-            ExitNow(error = OT_ERROR_INVALID_ARGS);
+            ExitNow();
         }
 
         error = otLinkMetricsConfigEnhAckProbing(mInstance, &address, enhAckFlags, pLinkMetrics,

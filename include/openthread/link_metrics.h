@@ -130,6 +130,15 @@ typedef void (*otLinkMetricsReportCallback)(const otIp6Address *       aSource,
  */
 typedef void (*otLinkMetricsMgmtResponseCallback)(const otIp6Address *aSource, uint8_t aStatus, void *aContext);
 
+/**
+ * This function pointer is called when Enh-ACK Probing IE is received.
+ *
+ * @param[in] aShortAddress     The Mac short address of the Probing Subject.
+ * @param[in] aExtAddress       A pointer to the Mac extended address of the Probing Subject.
+ * @param[in] aMetricsValues    A pointer to the Link Metrics values obtained from the IE.
+ * @param[in] aContext          A pointer to application-specific context.
+ *
+ */
 typedef void (*otLinkMetricsEnhAckProbingIeReportCallback)(const otShortAddress       aShortAddress,
                                                            const otExtAddress *       aExtAddress,
                                                            const otLinkMetricsValues *aMetricsValues,
@@ -187,7 +196,7 @@ otError otLinkMetricsConfigForwardTrackingSeries(otInstance *                   
                                                  void *                            aCallbackContext);
 
 /**
- * This function sends an MLE Link Metrics Management Request to configure/clear a Enhanced-ACK Based Probing.
+ * This function sends an MLE Link Metrics Management Request to configure/clear an Enhanced-ACK Based Probing.
  *
  * @param[in] aInstance          A pointer to an OpenThread instance.
  * @param[in] aDestination       A pointer to the destination address.
@@ -195,7 +204,7 @@ otError otLinkMetricsConfigForwardTrackingSeries(otInstance *                   
  *                               `1` to register. Other values are reserved.
  * @param[in] aLinkMetricsFlags  A pointer to flags specifying what metrics to query. Should be `NULL` when
  *                               `aEnhAckFlags` is `0`.
- * @param[in]  aCallback         A pointer to a function that is called when Link Metrics Management Response is
+ * @param[in]  aCallback         A pointer to a function that is called when an Enhanced Ack with Link Metrics is
  *                               received.
  * @param[in]  aCallbackContext  A pointer to application-specific context.
  *

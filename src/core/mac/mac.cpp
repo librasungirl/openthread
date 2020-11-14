@@ -2384,9 +2384,14 @@ exit:
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
 void Mac::ProcessEnhAckProbing(const RxFrame &aFrame, const Neighbor &aNeighbor)
 {
+    enum
+    {
+        kEnhAckProbingIeMaxLen = 2,
+    };
+
     const HeaderIe *enhAckProbingIe =
         reinterpret_cast<const HeaderIe *>(aFrame.GetThreadIe(ThreadIe::kEnhAckProbingIe));
-    uint8_t data[2];
+    uint8_t data[kEnhAckProbingIeMaxLen];
     uint8_t dataLen = 0;
 
     VerifyOrExit(enhAckProbingIe != nullptr);

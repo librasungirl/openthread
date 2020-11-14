@@ -50,8 +50,8 @@ extern "C" {
 /**
  * This method initializes the Link Metrics util module.
  *
- * @param[in]  aNoiseFloor    The noise floor that would be used in Link Metrics. It should be set to the platform
- *                            receive sensitivity.
+ * @param[in]  aNoiseFloor    The noise floor that would be used in Link Metrics. It should be set to the platform's
+ *                            noise floor (measured noise floor, receiver sensitivity or a constant).
  *
  */
 void otLinkMetricsInit(int8_t aNoiseFloor);

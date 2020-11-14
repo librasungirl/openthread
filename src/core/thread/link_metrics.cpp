@@ -619,7 +619,7 @@ void LinkMetrics::ProcessEnhAckIeData(const uint8_t *aData, uint8_t aLen, const 
     }
     if (linkMetricsValues.mMetrics.mLinkMargin && idx < aLen)
     {
-        linkMetricsValues.mLqiValue = aData[idx++];
+        linkMetricsValues.mLinkMarginValue = aData[idx++];
     }
     if (linkMetricsValues.mMetrics.mRssi && idx < aLen)
     {
