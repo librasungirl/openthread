@@ -871,7 +871,7 @@ void radioSendAck(void)
         uint8_t *dataPtr            = NULL;
 
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
-        uint8_t      linkMetricsData[2];
+        uint8_t      linkMetricsData[OT_ENH_PROBING_IE_DATA_MAX_SIZE];
         otMacAddress macAddress;
 
         otEXPECT(otMacFrameGetSrcAddr(&sReceiveFrame, &macAddress) == OT_ERROR_NONE);

@@ -39,7 +39,8 @@
 
 using namespace ot;
 
-static int8_t sNoiseFloor; ///< Noise floor, currently it should be set to the radio receive sensitivity value
+static int8_t sNoiseFloor; ///< The noise floor that would be used in Link Metrics. It should be set to the platform's
+                           ///< noise floor (measured noise floor, receiver sensitivity or a constant).
 
 class LinkMetricsDataInfo : public LinkedListEntry<LinkMetricsDataInfo>, public Clearable<LinkMetricsDataInfo>
 {
