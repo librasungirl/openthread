@@ -219,7 +219,7 @@ uint8_t otMacFrameGenerateCslIeTemplate(uint8_t *aDest)
 #endif
 
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
-uint8_t otMacFrameGenerateEnhAckProbingIeTemplate(uint8_t *aDest, uint8_t aIeDataLength)
+uint8_t otMacFrameGenerateEnhAckProbingIe(uint8_t *aDest, const uint8_t *aIeData, uint8_t aIeDataLength)
 {
     assert(aDest != nullptr);
 
@@ -232,6 +232,12 @@ uint8_t otMacFrameGenerateEnhAckProbingIeTemplate(uint8_t *aDest, uint8_t aIeDat
 
     reinterpret_cast<Mac::VendorIeHeader *>(aDest)->SetVendorOui(Mac::ThreadIe::kVendorOuiThreadCompanyId);
     reinterpret_cast<Mac::VendorIeHeader *>(aDest)->SetSubType(Mac::ThreadIe::kEnhAckProbingIe);
+
+    if (aIeData != nullptr)
+    {
+        aDest += sizeof(Mac::VendorIeHeader);
+        memcpy(aDest, aIeData, aIeDataLength);
+    }
 
     return sizeof(Mac::HeaderIe) + len;
 }

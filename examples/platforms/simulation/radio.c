@@ -876,7 +876,8 @@ void radioSendAck(void)
 
         otEXPECT(otMacFrameGetSrcAddr(&sReceiveFrame, &macAddress) == OT_ERROR_NONE);
 
-        linkMetricsDataLen = otLinkMetricsEnhAckGetDataByMacAddress(&macAddress, linkMetricsData);
+        linkMetricsDataLen = otLinkMetricsEnhAckGenData(&macAddress, sReceiveFrame.mInfo.mRxInfo.mLqi,
+                                                        sReceiveFrame.mInfo.mRxInfo.mRssi, linkMetricsData);
 
         if (linkMetricsDataLen > 0)
         {
@@ -892,12 +893,6 @@ void radioSendAck(void)
         if (sCslPeriod > 0)
         {
             otMacFrameSetCslIe(&sAckFrame, (uint16_t)sCslPeriod, getCslPhase());
-        }
-#endif
-#if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
-        if (dataPtr != NULL && linkMetricsDataLen > 0)
-        {
-            otMacFrameSetEnhAckProbingIe(&sAckFrame, dataPtr, linkMetricsDataLen);
         }
 #endif
         if (otMacFrameIsSecurityEnabled(&sAckFrame))
@@ -941,9 +936,6 @@ void radioProcessFrame(otInstance *aInstance)
 
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
     otEXPECT_ACTION(otMacFrameGetSrcAddr(&sReceiveFrame, &macAddress) == OT_ERROR_NONE, error = OT_ERROR_PARSE);
-
-    otLinkMetricsAggregateDataByMacAddress(&macAddress, sReceiveFrame.mInfo.mRxInfo.mLqi,
-                                           sReceiveFrame.mInfo.mRxInfo.mRssi);
 #endif
 
     // generate acknowledgment
@@ -1163,7 +1155,7 @@ static uint8_t generateAckIeData(uint8_t *aLinkMetricsIeData, uint8_t aLinkMetri
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
     if (aLinkMetricsIeData != NULL && aLinkMetricsIeDataLen > 0)
     {
-        offset += otMacFrameGenerateEnhAckProbingIeTemplate(sAckIeData, aLinkMetricsIeDataLen);
+        offset += otMacFrameGenerateEnhAckProbingIe(sAckIeData, aLinkMetricsIeData, aLinkMetricsIeDataLen);
     }
 #endif
 

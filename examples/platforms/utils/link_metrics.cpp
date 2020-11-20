@@ -71,58 +71,17 @@ public:
     }
 
     /**
-     * This method adds a new received signal strength (RSS) value to the average.
-     *
-     * @param[in]  aRss    A new received signal strength value (in dBm) to be added to the average.
-     *
-     */
-    void AddRss(int8_t aRss) { mRssAverager.Add(aRss); }
-
-    /**
-     * This method returns the current average received signal strength value.
-     *
-     * @returns The current average value or @c OT_RADIO_RSSI_INVALID if no average is available.
-     *
-     */
-    int8_t GetAverageRss(void) const { return mRssAverager.GetAverage(); }
-
-    /**
-     * This method adds a link quality indicator (LQI) value to the average.
-     *
-     * @param[in]  aLqi    Link Quality Indicator value to be added to the average.
-     *
-     */
-    void AddLqi(uint8_t aLqi) { mLqiAverager.Add(aLqi); }
-
-    /**
-     * This method gets the average LQI.
-     *
-     * @returns  The average LQI.
-     *
-     */
-    uint8_t GetAverageLqi(void) const { return mLqiAverager.GetAverage(); }
-
-    /**
-     * This method gets the average Link Margin.
-     *
-     * @returns  The average Link Margin.
-     *
-     */
-    uint8_t GetAverageLinkMargin(void) const
-    {
-        return LinkQualityInfo::ConvertRssToLinkMargin(sNoiseFloor, GetAverageRss());
-    }
-
-    /**
      * This method gets Link Metrics data stored in this object.
      *
+     * @param[in]   aLqi     LQI value of the acknowledeged frame.
+     * @param[in]   aRssi    RSSI value of the acknowledged frame.
      * @param[out]  aData    A pointer to the output buffer. @p aData MUST NOT be `nullptr`. The buffer should be larger
      * than 2 bytes at least. Otherwise the behavior would be undefined.
      *
      * @returns  The number of bytes written. If the writing fails, `0` would be returned.
      *
      */
-    uint8_t GetEnhAckData(uint8_t *aData) const
+    uint8_t GetEnhAckData(uint8_t aLqi, int8_t aRssi, uint8_t *aData) const
     {
         uint8_t bytes = 0;
 
@@ -130,17 +89,17 @@ public:
 
         if (mLinkMetrics.mLqi)
         {
-            aData[bytes++] = GetAverageLqi();
+            aData[bytes++] = aLqi;
         }
         if (mLinkMetrics.mLinkMargin)
         {
-            aData[bytes++] = static_cast<uint8_t>(GetAverageLinkMargin() * 255 /
+            aData[bytes++] = static_cast<uint8_t>(GetLinkMargin(aRssi) * 255 /
                                                   130); // Linear scale Link Margin from [0, 130] to [0, 255]
         }
         if (bytes < 2 && mLinkMetrics.mRssi)
         {
-            aData[bytes++] = static_cast<uint8_t>((GetAverageRss() + 130) * 255 /
-                                                  130); // Linear scale RSSI from [-130, 0] to [0, 255]
+            aData[bytes++] =
+                static_cast<uint8_t>((aRssi + 130) * 255 / 130); // Linear scale RSSI from [-130, 0] to [0, 255]
         }
 
     exit:
@@ -163,8 +122,7 @@ private:
     otShortAddress mShortAddress;
     otExtAddress   mExtAddress;
 
-    RssAverager mRssAverager;
-    LqiAverager mLqiAverager;
+    uint8_t GetLinkMargin(int8_t aRssi) const { return LinkQualityInfo::ConvertRssToLinkMargin(sNoiseFloor, aRssi); }
 
     bool Matches(const otShortAddress &aShortAddress) const { return mShortAddress == aShortAddress; };
 
@@ -257,27 +215,14 @@ exit:
     return dataInfo;
 }
 
-void otLinkMetricsAggregateDataByMacAddress(const otMacAddress *aMacAddress, uint8_t aLqi, int8_t aRssi)
-{
-    LinkMetricsDataInfo *dataInfo = GetLinkMetricsInfoByMacAddress(aMacAddress);
-
-    VerifyOrExit(dataInfo != nullptr);
-
-    dataInfo->AddLqi(aLqi);
-    dataInfo->AddRss(aRssi);
-
-exit:
-    return;
-}
-
-uint8_t otLinkMetricsEnhAckGetDataByMacAddress(const otMacAddress *aMacAddress, uint8_t *aData)
+uint8_t otLinkMetricsEnhAckGenData(const otMacAddress *aMacAddress, uint8_t aLqi, int8_t aRssi, uint8_t *aData)
 {
     uint8_t              bytes    = 0;
     LinkMetricsDataInfo *dataInfo = GetLinkMetricsInfoByMacAddress(aMacAddress);
 
     VerifyOrExit(dataInfo != nullptr);
 
-    bytes = dataInfo->GetEnhAckData(aData);
+    bytes = dataInfo->GetEnhAckData(aLqi, aRssi, aData);
 
 exit:
     return bytes;

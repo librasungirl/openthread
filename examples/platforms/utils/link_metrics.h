@@ -79,21 +79,15 @@ otError otLinkMetricsConfigureEnhAckProbing(otShortAddress      aShortAddress,
                                             otLinkMetrics       aLinkMetrics);
 
 /**
- * This method aggregates Link Metrics data for a specific Initiator indicated by the short address.
+ * This method generates the Link Metrics data (assessed for the acknowledged frame) bytes that would be included in
+ * Vendor-Specific IE.
  *
- * Nothing would be done if no probing is configured for the neighbor indicated by the address.
+ * This method first checks what Link Metrics are specified by the Initiator indicated by @p aMacAddress. And then
+ * write the values to @p aData.
  *
  * @param[in]  aMacAddress    The Mac address of the Initiator.
- * @param[in]  aLqi           LQI value to aggregate.
- * @param[in]  aRssi          RSSI value to aggregate.
- *
- */
-void otLinkMetricsAggregateDataByMacAddress(const otMacAddress *aMacAddress, uint8_t aLqi, int8_t aRssi);
-
-/**
- * This method gets the Link Metrics data for a specific Initiator indicated by the Mac address.
- *
- * @param[in]  aMacAddress    The short address of the Initiator.
+ * @param[in]  aLqi           LQI value of the acknowledged frame.
+ * @param[in]  aRssi          RSSI value of the acknowledged frame.
  * @param[out] aData          A pointer to the buffer where the data would be written to. The caller should make
  *                            sure that the size of the buffer is not less than the size of Link Metrics data
  *                            configured before.
@@ -101,7 +95,7 @@ void otLinkMetricsAggregateDataByMacAddress(const otMacAddress *aMacAddress, uin
  * @retval  The size of data read. Would be `0` if the Initiator is not found or @p aData is invalid.
  *
  */
-uint8_t otLinkMetricsEnhAckGetDataByMacAddress(const otMacAddress *aMacAddress, uint8_t *aData);
+uint8_t otLinkMetricsEnhAckGenData(const otMacAddress *aMacAddress, uint8_t aLqi, int8_t aRssi, uint8_t *aData);
 
 #ifdef __cplusplus
 } // extern "C"

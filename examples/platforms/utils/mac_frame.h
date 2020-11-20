@@ -294,15 +294,19 @@ void otMacFrameSetFrameCounter(otRadioFrame *aFrame, uint32_t aFrameCounter);
 uint8_t otMacFrameGenerateCslIeTemplate(uint8_t *aDest);
 
 /**
- * Write Enh-ACK Probing IE (Vendor IE with THREAD OUI) to a buffer (without setting IE value).
+ * Write Enh-ACK Probing IE (Vendor IE with THREAD OUI) to a buffer.
+ *
+ * @p aIeData could be `NULL`. If @p aIeData is `NULL`, this method generates the IE with the data unset. This allows
+ * users to generate the pattern first and update value later. (For example, using `otMacFrameSetEnhAckProbingIe`)
  *
  * @param[out]  aDest          A pointer to the output buffer.
+ * @param[in]   aIeData        A pointer to the Link Metrics data.
  * @param[in]   aIeDataLength  The length of Link Metrics data value. Should be `1` or `2`. (Per spec 4.11.3.4.4.6)
  *
  * @returns  The total count of bytes (total length of the Vendor IE) written to the buffer.
  *
  */
-uint8_t otMacFrameGenerateEnhAckProbingIeTemplate(uint8_t *aDest, uint8_t aIeDataLength);
+uint8_t otMacFrameGenerateEnhAckProbingIe(uint8_t *aDest, const uint8_t *aIeData, uint8_t aIeDataLength);
 
 /**
  * Sets the data value of Enh-ACK Probing IE (Vendor IE with THREAD OUI) in a frame.
