@@ -2485,7 +2485,7 @@ otError Mle::SendLinkProbe(const Ip6::Address &aDestination, uint8_t aSeriesId, 
 exit:
     return error;
 }
-#endif
+#endif // OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
 
 otError Mle::SendMessage(Message &aMessage, const Ip6::Address &aDestination)
 {

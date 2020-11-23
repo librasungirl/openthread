@@ -190,6 +190,7 @@ otError otLinkMetricsConfigureEnhAckProbing(const otShortAddress aShortAddress,
             GetLinkMetricsDataInfoActiveList().Push(*dataInfo);
         }
 
+        // Overwrite the previous configuration if it already existed.
         dataInfo->Set(aLinkMetrics, aShortAddress, *aExtAddress);
     }
 
