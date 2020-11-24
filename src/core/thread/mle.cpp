@@ -3796,7 +3796,7 @@ void Mle::HandleLinkProbe(const Message &aMessage, const Ip6::MessageInfo &aMess
 exit:
     LogProcessError(kTypeLinkProbe, error);
 }
-#endif
+#endif // OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
 
 void Mle::ProcessAnnounce(void)
 {

@@ -75,14 +75,19 @@ public:
      *
      * @param[in]   aLqi     LQI value of the acknowledeged frame.
      * @param[in]   aRssi    RSSI value of the acknowledged frame.
-     * @param[out]  aData    A pointer to the output buffer. @p aData MUST NOT be `nullptr`. The buffer should be larger
-     * than 2 bytes at least. Otherwise the behavior would be undefined.
+     * @param[out]  aData    A pointer to the output buffer. @p aData MUST NOT be `nullptr`. The buffer should have 2
+     *                       bytes at least (Per spec 4.11.3.4.4.6). Otherwise the behavior would be undefined.
      *
      * @returns  The number of bytes written. If the writing fails, `0` would be returned.
      *
      */
     uint8_t GetEnhAckData(uint8_t aLqi, int8_t aRssi, uint8_t *aData) const
     {
+        enum
+        {
+            kEnhAckProbingDataMaxLen = 2;
+        };
+
         uint8_t bytes = 0;
 
         VerifyOrExit(aData != nullptr);
@@ -96,7 +101,7 @@ public:
             aData[bytes++] = static_cast<uint8_t>(GetLinkMargin(aRssi) * 255 /
                                                   130); // Linear scale Link Margin from [0, 130] to [0, 255]
         }
-        if (bytes < 2 && mLinkMetrics.mRssi)
+        if (bytes < kEnhAckProbignDataMaxLen && mLinkMetrics.mRssi)
         {
             aData[bytes++] =
                 static_cast<uint8_t>((aRssi + 130) * 255 / 130); // Linear scale RSSI from [-130, 0] to [0, 255]

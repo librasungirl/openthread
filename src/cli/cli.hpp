@@ -583,7 +583,7 @@ private:
                                           const otLinkMetricsValues *aMetricsValues);
 
     const char *LinkMetricsStatusToStr(uint8_t aStatus);
-#endif
+#endif // OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
 
     static Interpreter &GetOwner(OwnerLocator &aOwnerLocator);
 
