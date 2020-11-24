@@ -73,6 +73,8 @@ public:
     /**
      * This method gets Link Metrics data stored in this object.
      *
+     * TODO: Currently the order of Link Metircs data is fixed. Will update it to follow the order specified in TLV.
+     *
      * @param[in]   aLqi     LQI value of the acknowledeged frame.
      * @param[in]   aRssi    RSSI value of the acknowledged frame.
      * @param[out]  aData    A pointer to the output buffer. @p aData MUST NOT be `nullptr`. The buffer should have 2
@@ -85,7 +87,7 @@ public:
     {
         enum
         {
-            kEnhAckProbingDataMaxLen = 2;
+            kEnhAckProbingDataMaxLen = 2,
         };
 
         uint8_t bytes = 0;
@@ -101,7 +103,7 @@ public:
             aData[bytes++] = static_cast<uint8_t>(GetLinkMargin(aRssi) * 255 /
                                                   130); // Linear scale Link Margin from [0, 130] to [0, 255]
         }
-        if (bytes < kEnhAckProbignDataMaxLen && mLinkMetrics.mRssi)
+        if (bytes < kEnhAckProbingDataMaxLen && mLinkMetrics.mRssi)
         {
             aData[bytes++] =
                 static_cast<uint8_t>((aRssi + 130) * 255 / 130); // Linear scale RSSI from [-130, 0] to [0, 255]
