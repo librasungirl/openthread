@@ -2499,6 +2499,13 @@ void Mac::UpdateFrameControlField(const Neighbor *aNeighbor, bool aIsTimeSync, u
     }
     else
 #endif
+#if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
+        if (aNeighbor != nullptr && aNeighbor->IsEnhAckProbingActive())
+    {
+        aFcf |= Frame::kFcfFrameVersion2015; ///< Set version to 2015 to fetch Link Metrics data in Enh-ACK.
+    }
+    else
+#endif
 #endif
     {
         aFcf |= Frame::kFcfFrameVersion2006;

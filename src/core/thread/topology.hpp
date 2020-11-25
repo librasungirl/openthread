@@ -659,8 +659,22 @@ public:
     void SetEnhAckProbingMetrics(const otLinkMetrics &aEnhAckProbingMetrics)
     {
         mEnhAckProbingMetrics = aEnhAckProbingMetrics;
-    };
-#endif
+    }
+
+    /**
+     * This method indicates if Enh-ACK Probing is configured and active for this `Neighbor` object.
+     *
+     * @retval TRUE   Enh-ACK Probing is configured and active for this `Neighbor`.
+     * @retval FALSE  Otherwise.
+     *
+     */
+    bool IsEnhAckProbingActive() const
+    {
+        return (mEnhAckProbingMetrics.mLqi != 0) || (mEnhAckProbingMetrics.mLinkMargin != 0) ||
+               (mEnhAckProbingMetrics.mRssi != 0);
+    }
+
+#endif // OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
 protected:
     /**
      * This method initializes the `Neighbor` object.
@@ -703,9 +717,12 @@ private:
     LinkQualityInfo mLinkInfo; ///< Link quality info (contains average RSS, link margin and link quality)
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
     LinkedList<LinkMetricsSeriesInfo> mLinkMetricsSeriesInfoList; ///< A list of Link Metrics Forward Tracking Series
-                                                                  ///< that is being tracked for this neighbor.
-    otLinkMetrics mEnhAckProbingMetrics; ///< The metrics configured for Enh-ACK Based Probing for the Probing Subject
-                                         ///< (this neighbor).
+                                                                  ///< that is being tracked for this neighbor. Note
+                                                                  ///< that this device is the Subject and this
+                                                                  ///< this neighbor is the Initiator.
+    otLinkMetrics mEnhAckProbingMetrics; ///< Metrics configured for Enh-ACK Based Probing at the Probing Subject
+                                         ///< (this neighbor). Note that this device is the Initiator and this neighbor
+                                         ///< is the Subject.
 #endif
 };
 
