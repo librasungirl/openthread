@@ -254,7 +254,6 @@ private:
 #endif // OPENTHREAD_CONFIG_TIME_SYNC_ENABLE
 
 #if OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE
-OT_TOOL_PACKED_BEGIN
 class ThreadIe
 {
 public:
@@ -267,7 +266,7 @@ public:
     {
         kEnhAckProbingIe = 0x00,
     };
-} OT_TOOL_PACKED_END;
+};
 #endif
 
 #endif // OPENTHREAD_CONFIG_TIME_SYNC_ENABLE || OPENTHREAD_CONFIG_MLE_LINK_METRICS_ENABLE

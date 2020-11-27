@@ -606,7 +606,7 @@ public:
      * @param[in]  aInstance    The OpenThread instance structure.
      * @param[in]  aDataLength  Length of Link Metrics data in the Vendor-Specific IE. Per spec 4.11.3.4.4.6,
      *                          @p aDataLength should only be 1 or 2. The probing would be disabled if `aDataLength` is
-     * 0.
+     *                          `0`.
      * @param[in]  aShortAddr   The short address of the the probing Initiator.
      * @param[in]  aExtAddr     The extended source address of the probing Initiator. @p aExtAddr MUST NOT be `NULL`.
      *

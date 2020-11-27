@@ -368,24 +368,24 @@ public:
      */
     void SetFromPublicSeriesFlags(const otLinkMetricsSeriesFlags aSeriesFlags)
     {
-        this->Clear();
+        Clear();
         if (aSeriesFlags.mLinkProbe)
         {
-            this->SetLinkProbeFlag();
+            SetLinkProbeFlag();
         }
         if (aSeriesFlags.mMacData)
         {
-            this->SetMacDataFlag();
+            SetMacDataFlag();
         }
         if (aSeriesFlags.mMacDataRequest)
         {
-            this->SetMacDataRequestFlag();
+            SetMacDataRequestFlag();
         }
         if (aSeriesFlags.mMacAck)
         {
-            this->SetMacAckFlag();
+            SetMacAckFlag();
         }
-    };
+    }
 
     /**
      * This method clears the Link Probe flag.

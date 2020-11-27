@@ -226,7 +226,7 @@ public:
                                                  const otLinkMetrics *           aLinkMetricsFlags);
 
     /**
-     * This function sends an MLE Link Metrics Management Request to configure/clear a Enhanced-ACK Based Probing.
+     * This method sends an MLE Link Metrics Management Request to configure/clear a Enhanced-ACK Based Probing.
      *
      * @param[in] aDestination       A reference to the IPv6 address of the destination.
      * @param[in] aEnhAckFlags       Enh-ACK Flags to indicate whether to register or clear the probing. `0` to clear

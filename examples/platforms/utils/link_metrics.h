@@ -92,7 +92,7 @@ otError otLinkMetricsConfigureEnhAckProbing(otShortAddress      aShortAddress,
  *                            sure that the size of the buffer is not less than the size of Link Metrics data
  *                            configured before.
  *
- * @retval  The size of data read. Would be `0` if the Initiator is not found or @p aData is invalid.
+ * @returns  The size of data read. Would be `0` if the Initiator is not found or @p aData is invalid.
  *
  */
 uint8_t otLinkMetricsEnhAckGenData(const otMacAddress *aMacAddress, uint8_t aLqi, int8_t aRssi, uint8_t *aData);

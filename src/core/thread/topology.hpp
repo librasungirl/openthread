@@ -648,7 +648,7 @@ public:
      * This method gets the Enh-ACK Probing metrics (this `Neighbor` object is the Probing Subject).
      *
      */
-    otLinkMetrics GetEnhAckProbingMetrics(void) const { return mEnhAckProbingMetrics; }
+    const otLinkMetrics &GetEnhAckProbingMetrics(void) const { return mEnhAckProbingMetrics; }
 
     /**
      * This method sets the Enh-ACK Probing metrics (this `Neighbor` object is the Probing Subject).
@@ -668,7 +668,7 @@ public:
      * @retval FALSE  Otherwise.
      *
      */
-    bool IsEnhAckProbingActive() const
+    bool IsEnhAckProbingActive(void) const
     {
         return (mEnhAckProbingMetrics.mLqi != 0) || (mEnhAckProbingMetrics.mLinkMargin != 0) ||
                (mEnhAckProbingMetrics.mRssi != 0);
