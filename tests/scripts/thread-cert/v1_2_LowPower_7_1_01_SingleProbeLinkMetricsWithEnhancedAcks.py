@@ -85,8 +85,8 @@ class LowPower_7_1_01(thread_cert.TestCase):
         leader_addr = self.nodes[LEADER].get_ip6_address(ADDRESS_TYPE.LINK_LOCAL)
 
         # Step 3 - Verify connectivity by instructing each device to sending an ICMPv6 Echo Request to the DUT
-        self.nodes[SED_1].ping(leader_addr, timeout=POLL_PERIOD)
-        self.nodes[SSED_1].ping(leader_addr)
+        self.assertTrue(self.nodes[SED_1].ping(leader_addr, timeout=POLL_PERIOD))
+        self.assertTrue(self.nodes[SSED_1].ping(leader_addr))
         self.simulator.go(5)
 
         # Step 4 - SED_1 enables IEEE 802.15.4-2015 Enhanced ACK based Probing by sending a Link Metrics Management

@@ -408,7 +408,7 @@ private:
                                              const otLinkMetrics &  aLinkMetrics,
                                              Neighbor &             aNeighbor);
 
-    bool IsDestAddrValid(const Ip6::Address &aDestination);
+    Neighbor *GetNeighborFromLinkLocalAddr(const Ip6::Address &aDestination);
 
     static uint8_t TypeIdFlagsFromLinkMetricsFlags(LinkMetricsTypeIdFlags *aTypeIdFlags,
                                                    const otLinkMetrics &   aLinkMetricsFlags);

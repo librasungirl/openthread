@@ -921,7 +921,7 @@ void radioProcessFrame(otInstance *aInstance)
 {
     otError      error = OT_ERROR_NONE;
     otMacAddress macAddress;
-    (void)macAddress;
+    OT_UNUSED_VARIABLE(macAddress);
 
     sReceiveFrame.mInfo.mRxInfo.mRssi = -20;
     sReceiveFrame.mInfo.mRxInfo.mLqi  = OT_RADIO_LQI_NONE;

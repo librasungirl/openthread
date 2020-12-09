@@ -981,8 +981,8 @@ otError otPlatRadioSetChannelMaxTransmitPower(otInstance *aInstance, uint8_t aCh
  *
  * After Enhanced-ACK Based Probing is configured by a specific Probing Initiator, the Enhanced-ACK sent to that
  * node should include Vendor-Specific IE containing Link Metrics data. This method informs the radio to start/stop to
- * collect and aggregate Link Metrics data and include Vendor-Specific IE that containing the data in Enhanced-ACK sent
- * to that Probing Initiator.
+ * collect Link Metrics data and include Vendor-Specific IE that containing the data in Enhanced-ACK sent to that
+ * Probing Initiator.
  *
  * @param[in]  aInstance     The OpenThread instance structure.
  * @param[in]  aLinkMetrics  This parameter specifies what metrics to query. Per spec 4.11.3.4.4.6, at most 2 metrics
@@ -990,10 +990,10 @@ otError otPlatRadioSetChannelMaxTransmitPower(otInstance *aInstance, uint8_t aCh
  * @param[in]  aShortAddr    The short address of the Probing Initiator.
  * @param[in]  aExtAddr      The extended source address of the Probing Initiator. @p aExtAddr MUST NOT be `NULL`.
  *
- * @retval OT_ERROR_NONE           Successfully enable/disable or update Enhanced-ACK Based Probing for a specific
- *                                 Initiator.
- * @retval OT_ERROR_INVALID_ARGS   @p aDataLength or @p aExtAddr is not valid.
- * @retval OT_ERROR_NOT_SUPPORTED  Radio driver doesn't support Enhanced-ACK Probing.
+ * @retval  OT_ERROR_NONE            Successfully configured the Enhanced-ACK Based Probing.
+ * @retval  OT_ERROR_INVALID_ARGS    @p aExtAddress is `NULL`.
+ * @retval  OT_ERROR_NOT_FOUND       The Initiator indicated by @p aShortAddress is not found when trying to clear.
+ * @retval  OT_ERROR_NO_BUFS         No more Initiator can be supported.
  *
  */
 otError otPlatRadioConfigureEnhAckProbing(otInstance *        aInstance,

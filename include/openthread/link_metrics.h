@@ -159,6 +159,7 @@ typedef void (*otLinkMetricsEnhAckProbingIeReportCallback)(const otShortAddress 
  * @retval OT_ERROR_NONE              Successfully sent a Link Metrics query message.
  * @retval OT_ERROR_NO_BUFS           Insufficient buffers to generate the MLE Data Request message.
  * @retval OT_ERROR_UNKNOWN_NEIGHBOR  @p aDestination is not link-local or the neighbor is not found.
+ * @retval OT_ERROR_NOT_CAPABLE       The neighbor is not a Thread 1.2 device and does not support Link Metrics.
  *
  */
 otError otLinkMetricsQuery(otInstance *                aInstance,
@@ -185,6 +186,7 @@ otError otLinkMetricsQuery(otInstance *                aInstance,
  * @retval OT_ERROR_NO_BUFS           Insufficient buffers to generate the MLE Link Metrics Management Request message.
  * @retval OT_ERROR_INVALID_ARGS      @p aSeriesId is not within the valid range.
  * @retval OT_ERROR_UNKNOWN_NEIGHBOR  @p aDestination is not link-local or the neighbor is not found.
+ * @retval OT_ERROR_NOT_CAPABLE       The neighbor is not a Thread 1.2 device and does not support Link Metrics.
  *
  */
 otError otLinkMetricsConfigForwardTrackingSeries(otInstance *                      aInstance,
@@ -212,6 +214,7 @@ otError otLinkMetricsConfigForwardTrackingSeries(otInstance *                   
  * @retval OT_ERROR_NO_BUFS           Insufficient buffers to generate the MLE Link Metrics Management Request message.
  * @retval OT_ERROR_INVALID_ARGS      @p aEnhAckFlags is not a valid value or @p aLinkMetricsFlags isn't correct.
  * @retval OT_ERROR_UNKNOWN_NEIGHBOR  @p aDestination is not link-local or the neighbor is not found.
+ * @retval OT_ERROR_NOT_CAPABLE       The neighbor is not a Thread 1.2 device and does not support Link Metrics.
  *
  */
 otError otLinkMetricsConfigEnhAckProbing(otInstance *                               aInstance,
@@ -235,6 +238,7 @@ otError otLinkMetricsConfigEnhAckProbing(otInstance *                           
  * @retval OT_ERROR_NO_BUFS           Insufficient buffers to generate the MLE Link Probe message.
  * @retval OT_ERROR_INVALID_ARGS      @p aSeriesId or @p aLength is not within the valid range.
  * @retval OT_ERROR_UNKNOWN_NEIGHBOR  @p aDestination is not link-local or the neighbor is not found.
+ * @retval OT_ERROR_NOT_CAPABLE       The neighbor is not a Thread 1.2 device and does not support Link Metrics.
  *
  */
 otError otLinkMetricsSendLinkProbe(otInstance *        aInstance,

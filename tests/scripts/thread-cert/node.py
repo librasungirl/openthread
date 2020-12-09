@@ -1941,7 +1941,6 @@ class NodeImpl:
                                                          enable: bool,
                                                          metrics_flags: str,
                                                          ext_flags=''):
-        op_str = 'register'
         cmd = "linkmetrics mgmt %s enhanced-ack" % (dst_addr)
         if enable:
             cmd = cmd + (" register %s %s" % (metrics_flags, ext_flags))

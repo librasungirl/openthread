@@ -119,8 +119,10 @@ otError LinkMetrics::LinkMetricsQuery(const Ip6::Address & aDestination,
     otError                error;
     LinkMetricsTypeIdFlags typeIdFlags[kMaxTypeIdFlags];
     uint8_t                typeIdFlagsCount = 0;
+    Neighbor *             neighbor         = GetNeighborFromLinkLocalAddr(aDestination);
 
-    VerifyOrExit(IsDestAddrValid(aDestination), error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
 
     if (aLinkMetricsFlags != nullptr)
     {
@@ -149,8 +151,10 @@ otError LinkMetrics::SendMgmtRequestForwardTrackingSeries(const Ip6::Address &  
     SeriesFlags *seriesFlags       = reinterpret_cast<SeriesFlags *>(subTlvs + sizeof(Tlv) + sizeof(aSeriesId));
     uint8_t      typeIdFlagsOffset = sizeof(Tlv) + sizeof(uint8_t) * 2;
     uint8_t      typeIdFlagsCount  = 0;
+    Neighbor *   neighbor          = GetNeighborFromLinkLocalAddr(aDestination);
 
-    VerifyOrExit(IsDestAddrValid(aDestination), error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
 
     // Directly transform `aLinkMetricsFlags` into LinkMetricsTypeIdFlags and put them into `subTlvs`
     if (aLinkMetricsFlags != nullptr)
@@ -191,13 +195,10 @@ otError LinkMetrics::SendMgmtRequestEnhAckProbing(const Ip6::Address &          
     uint8_t      subTlvs[sizeof(Tlv) + sizeof(enhAckFlags) + sizeof(LinkMetricsTypeIdFlags) * kMaxTypeIdFlags];
     Tlv *        enhancedAckLinkMetricsConfigurationSubTlv = reinterpret_cast<Tlv *>(subTlvs);
     Mac::Address macAddress;
-    Neighbor *   neighbor = nullptr;
-
-    VerifyOrExit(aDestination.IsLinkLocal(), error = OT_ERROR_UNKNOWN_NEIGHBOR);
-    aDestination.GetIid().ConvertToMacAddress(macAddress);
-    neighbor = Get<NeighborTable>().FindNeighbor(macAddress);
+    Neighbor *   neighbor = GetNeighborFromLinkLocalAddr(aDestination);
 
     VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
 
     if (aEnhAckFlags == OT_LINK_METRICS_ENH_ACK_CLEAR)
     {
@@ -236,10 +237,12 @@ exit:
 
 otError LinkMetrics::SendLinkProbe(const Ip6::Address &aDestination, uint8_t aSeriesId, uint8_t aLength)
 {
-    otError error = OT_ERROR_NONE;
-    uint8_t buf[kLinkProbeMaxLen];
+    otError   error = OT_ERROR_NONE;
+    uint8_t   buf[kLinkProbeMaxLen];
+    Neighbor *neighbor = GetNeighborFromLinkLocalAddr(aDestination);
 
-    VerifyOrExit(IsDestAddrValid(aDestination), error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
 
     VerifyOrExit(aLength <= LinkMetrics::kLinkProbeMaxLen && aSeriesId != kQueryIdSingleProbe &&
                      aSeriesId != kSeriesIdAllSeries,
@@ -731,6 +734,8 @@ LinkMetrics::LinkMetricsStatus LinkMetrics::ConfigureEnhAckProbing(LinkMetricsEn
     if (aEnhAckFlags == kEnhAckRegister)
     {
         VerifyOrExit(!aLinkMetrics.mPduCount, status = kLinkMetricsStatusOtherError);
+        VerifyOrExit(aLinkMetrics.mLqi || aLinkMetrics.mLinkMargin || aLinkMetrics.mRssi,
+                     status = kLinkMetricsStatusOtherError);
         VerifyOrExit(!(aLinkMetrics.mLqi && aLinkMetrics.mLinkMargin && aLinkMetrics.mRssi),
                      status = kLinkMetricsStatusOtherError);
 
@@ -738,6 +743,8 @@ LinkMetrics::LinkMetricsStatus LinkMetrics::ConfigureEnhAckProbing(LinkMetricsEn
     }
     else if (aEnhAckFlags == kEnhAckClear)
     {
+        VerifyOrExit(!aLinkMetrics.mLqi && !aLinkMetrics.mLinkMargin && !aLinkMetrics.mRssi,
+                     status = kLinkMetricsStatusOtherError);
         error = Get<Radio>().ConfigureEnhAckProbing(aLinkMetrics, aNeighbor.GetRloc16(), aNeighbor.GetExtAddress());
     }
     else
@@ -751,17 +758,17 @@ exit:
     return status;
 }
 
-bool LinkMetrics::IsDestAddrValid(const Ip6::Address &aDestination)
+Neighbor *LinkMetrics::GetNeighborFromLinkLocalAddr(const Ip6::Address &aDestination)
 {
-    bool         result = true;
+    Neighbor *   neighbor = nullptr;
     Mac::Address macAddress;
 
-    VerifyOrExit(aDestination.IsLinkLocal(), result = false);
+    VerifyOrExit(aDestination.IsLinkLocal());
     aDestination.GetIid().ConvertToMacAddress(macAddress);
-    VerifyOrExit(Get<NeighborTable>().FindNeighbor(macAddress) != nullptr, result = false);
+    neighbor = Get<NeighborTable>().FindNeighbor(macAddress);
 
 exit:
-    return result;
+    return neighbor;
 }
 
 uint8_t LinkMetrics::TypeIdFlagsFromLinkMetricsFlags(LinkMetricsTypeIdFlags *aTypeIdFlags,

@@ -60,7 +60,7 @@ public:
      * @param[in]  aLinkMetrics     Flags specifying what metrics to query.
      * @param[in]  aShortAddress    Short Address of the Probing Initiator tracked by this object.
      * @param[in]  aExtAddress      A reference to the Extended Address of the Probing Initiator tracked by this
-     * object.
+     *                              object.
      *
      */
     void Set(const otLinkMetrics aLinkMetrics, const otShortAddress aShortAddress, const otExtAddress &aExtAddress)

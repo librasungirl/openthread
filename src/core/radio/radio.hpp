@@ -600,7 +600,7 @@ public:
      *
      * After Enhanced-ACK Based Probing is configured by a specific Probing Initiator, the Enhanced-ACK sent to that
      * node should include Vendor-Specific IE containing Link Metrics data. This method informs the radio to
-     * starts/stops to collect and aggregate Link Metrics data and include Vendor-Specific IE that containing the data
+     * starts/stops to collect Link Metrics data and include Vendor-Specific IE that containing the data
      * in Enhanced-ACK sent to that Probing Initiator.
      *
      * @param[in]  aInstance    The OpenThread instance structure.
@@ -608,7 +608,7 @@ public:
      *                          @p aDataLength should only be 1 or 2. The probing would be disabled if `aDataLength` is
      *                          `0`.
      * @param[in]  aShortAddr   The short address of the the probing Initiator.
-     * @param[in]  aExtAddr     The extended source address of the probing Initiator. @p aExtAddr MUST NOT be `NULL`.
+     * @param[in]  aExtAddr     The extended source address of the probing Initiator.
      *
      * @retval OT_ERROR_NONE           Successfully enable/disable or update Enhanced-ACK Based Probing for a specific
      *                                 Initiator.
