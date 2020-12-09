@@ -119,10 +119,8 @@ otError LinkMetrics::LinkMetricsQuery(const Ip6::Address & aDestination,
     otError                error;
     LinkMetricsTypeIdFlags typeIdFlags[kMaxTypeIdFlags];
     uint8_t                typeIdFlagsCount = 0;
-    Neighbor *             neighbor         = GetNeighborFromLinkLocalAddr(aDestination);
 
-    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
-    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
+    SuccessOrExit(error = CheckDestination(aDestation));
 
     if (aLinkMetricsFlags != nullptr)
     {
@@ -151,10 +149,8 @@ otError LinkMetrics::SendMgmtRequestForwardTrackingSeries(const Ip6::Address &  
     SeriesFlags *seriesFlags       = reinterpret_cast<SeriesFlags *>(subTlvs + sizeof(Tlv) + sizeof(aSeriesId));
     uint8_t      typeIdFlagsOffset = sizeof(Tlv) + sizeof(uint8_t) * 2;
     uint8_t      typeIdFlagsCount  = 0;
-    Neighbor *   neighbor          = GetNeighborFromLinkLocalAddr(aDestination);
 
-    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
-    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
+    SuccessOrExit(error = CheckDestination(aDestation));
 
     // Directly transform `aLinkMetricsFlags` into LinkMetricsTypeIdFlags and put them into `subTlvs`
     if (aLinkMetricsFlags != nullptr)
@@ -195,10 +191,9 @@ otError LinkMetrics::SendMgmtRequestEnhAckProbing(const Ip6::Address &          
     uint8_t      subTlvs[sizeof(Tlv) + sizeof(enhAckFlags) + sizeof(LinkMetricsTypeIdFlags) * kMaxTypeIdFlags];
     Tlv *        enhancedAckLinkMetricsConfigurationSubTlv = reinterpret_cast<Tlv *>(subTlvs);
     Mac::Address macAddress;
-    Neighbor *   neighbor = GetNeighborFromLinkLocalAddr(aDestination);
+    Neighbor *   neighbor = nullptr;
 
-    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
-    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
+    SuccessOrExit(error = CheckDestination(aDestation, neighbor));
 
     if (aEnhAckFlags == OT_LINK_METRICS_ENH_ACK_CLEAR)
     {
@@ -239,10 +234,8 @@ otError LinkMetrics::SendLinkProbe(const Ip6::Address &aDestination, uint8_t aSe
 {
     otError   error = OT_ERROR_NONE;
     uint8_t   buf[kLinkProbeMaxLen];
-    Neighbor *neighbor = GetNeighborFromLinkLocalAddr(aDestination);
 
-    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
-    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
+    SuccessOrExit(error = CheckDestination(aDestation));
 
     VerifyOrExit(aLength <= LinkMetrics::kLinkProbeMaxLen && aSeriesId != kQueryIdSingleProbe &&
                      aSeriesId != kSeriesIdAllSeries,
@@ -758,8 +751,9 @@ exit:
     return status;
 }
 
-Neighbor *LinkMetrics::GetNeighborFromLinkLocalAddr(const Ip6::Address &aDestination)
+otError LinkMetrics::CheckDestination(const Ip6::Address &aDestination, Neighbor *aNeighbor)
 {
+    otError error = OT_ERROR_NONE;
     Neighbor *   neighbor = nullptr;
     Mac::Address macAddress;
 
@@ -767,8 +761,16 @@ Neighbor *LinkMetrics::GetNeighborFromLinkLocalAddr(const Ip6::Address &aDestina
     aDestination.GetIid().ConvertToMacAddress(macAddress);
     neighbor = Get<NeighborTable>().FindNeighbor(macAddress);
 
+    VerifyOrExit(neighbor != nullptr, error = OT_ERROR_UNKNOWN_NEIGHBOR);
+    VerifyOrExit(neighbor->IsThreadVersion1p2(), error = OT_ERROR_NOT_CAPABLE);
+
+    if (aNeighbor)
+    {
+        aNeighbor = neighbor;
+    }
+
 exit:
-    return neighbor;
+    return error;
 }
 
 uint8_t LinkMetrics::TypeIdFlagsFromLinkMetricsFlags(LinkMetricsTypeIdFlags *aTypeIdFlags,
