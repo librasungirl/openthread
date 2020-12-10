@@ -232,8 +232,8 @@ exit:
 
 otError LinkMetrics::SendLinkProbe(const Ip6::Address &aDestination, uint8_t aSeriesId, uint8_t aLength)
 {
-    otError   error = OT_ERROR_NONE;
-    uint8_t   buf[kLinkProbeMaxLen];
+    otError error = OT_ERROR_NONE;
+    uint8_t buf[kLinkProbeMaxLen];
 
     SuccessOrExit(error = CheckDestination(aDestination));
 
