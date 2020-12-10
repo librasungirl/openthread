@@ -120,7 +120,7 @@ otError LinkMetrics::LinkMetricsQuery(const Ip6::Address & aDestination,
     LinkMetricsTypeIdFlags typeIdFlags[kMaxTypeIdFlags];
     uint8_t                typeIdFlagsCount = 0;
 
-    SuccessOrExit(error = CheckDestination(aDestation));
+    SuccessOrExit(error = CheckDestination(aDestination));
 
     if (aLinkMetricsFlags != nullptr)
     {
@@ -150,7 +150,7 @@ otError LinkMetrics::SendMgmtRequestForwardTrackingSeries(const Ip6::Address &  
     uint8_t      typeIdFlagsOffset = sizeof(Tlv) + sizeof(uint8_t) * 2;
     uint8_t      typeIdFlagsCount  = 0;
 
-    SuccessOrExit(error = CheckDestination(aDestation));
+    SuccessOrExit(error = CheckDestination(aDestination));
 
     // Directly transform `aLinkMetricsFlags` into LinkMetricsTypeIdFlags and put them into `subTlvs`
     if (aLinkMetricsFlags != nullptr)
@@ -193,7 +193,7 @@ otError LinkMetrics::SendMgmtRequestEnhAckProbing(const Ip6::Address &          
     Mac::Address macAddress;
     Neighbor *   neighbor = nullptr;
 
-    SuccessOrExit(error = CheckDestination(aDestation, neighbor));
+    SuccessOrExit(error = CheckDestination(aDestination, neighbor));
 
     if (aEnhAckFlags == OT_LINK_METRICS_ENH_ACK_CLEAR)
     {
@@ -235,7 +235,7 @@ otError LinkMetrics::SendLinkProbe(const Ip6::Address &aDestination, uint8_t aSe
     otError   error = OT_ERROR_NONE;
     uint8_t   buf[kLinkProbeMaxLen];
 
-    SuccessOrExit(error = CheckDestination(aDestation));
+    SuccessOrExit(error = CheckDestination(aDestination));
 
     VerifyOrExit(aLength <= LinkMetrics::kLinkProbeMaxLen && aSeriesId != kQueryIdSingleProbe &&
                      aSeriesId != kSeriesIdAllSeries,
