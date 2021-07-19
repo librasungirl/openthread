@@ -1762,7 +1762,7 @@ void Mle::HandleAttachTimer(void)
             SetAttachState(kAttachStateAnnounce);
             IgnoreError(SendParentRequest(kParentRequestTypeRoutersAndReeds));
             mAnnounceChannel = Mac::ChannelMask::kChannelIteratorFirst;
-            delay            = mAnnounceDelay;
+            delay            = kParentRequestReedTimeout;
             break;
         }
 
@@ -3809,7 +3809,7 @@ void Mle::HandleAnnounce(const Message &aMessage, const Ip6::MessageInfo &aMessa
     uint8_t                   channel;
     uint16_t                  panId;
 
-    Log(kMessageReceive, kTypeAnnounce, aMessageInfo.GetPeerAddr());
+    Log(kMessageReceive, kTypeAnnounce, aMessageInfo.GetPeerAddr(), Get<Mac::Mac>().GetPanChannel());
 
     SuccessOrExit(error = Tlv::FindTlv(aMessage, channelTlv));
     VerifyOrExit(channelTlv.IsValid(), error = kErrorParse);
