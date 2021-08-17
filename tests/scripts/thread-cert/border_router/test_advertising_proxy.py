@@ -181,7 +181,7 @@ class SingleHostAndService(thread_cert.TestCase):
 
         self.assertIsNone(host.discover_mdns_service('my-service', '_ipps._tcp', 'my-host'))
         self.assertIsNone(host.discover_mdns_service('my-service-1', '_ipps._tcp', 'my-host'))
-        // intentionlly for test
+        # intentionlly for test
         leader_addr = server.get_ip6_address(config.ADDRESS_TYPE.LINK_LOCAL)
         self.assertFalse(self.nodes[ROUTER].ping(leader_addr))
 
