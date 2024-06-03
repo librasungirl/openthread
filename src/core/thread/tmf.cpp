@@ -313,8 +313,10 @@ bool SecureAgent::HandleResource(const char *aUriPath, Message &aMessage, const 
         Case(kUriRelayTx, MeshCoP::BorderAgent);
         Case(kUriCommissionerGet, MeshCoP::BorderAgent);
         Case(kUriCommissionerSet, MeshCoP::BorderAgent);
-        Case(kUriActiveGet, MeshCoP::BorderAgent);
+#Case(kUriActiveGet, MeshCoP::BorderAgent);
+        Case(kUriActiveGet, MeshCoP::ActiveDatasetManager);
         Case(kUriActiveSet, MeshCoP::BorderAgent);
+#Case(kUriPendingGet, MeshCoP::PendingDatasetManager);
         Case(kUriPendingGet, MeshCoP::BorderAgent);
         Case(kUriPendingSet, MeshCoP::BorderAgent);
         Case(kUriProxyTx, MeshCoP::BorderAgent);
