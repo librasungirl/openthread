@@ -936,7 +936,6 @@ TimeMilli RoutingManager::LifetimedPrefix::CalculateExpirationTime(uint32_t aLif
 {
     // `aLifetime` is in unit of seconds. This method ensures
     // that the time calculation fits with `TimeMilli` range.
-    LogInfo("mLastUpdateTime %d, Lifetime: %d", mLastUpdateTime, aLifetime);
 
     return RoutingManager::CalculateExpirationTime(mLastUpdateTime, aLifetime);
 }
@@ -966,6 +965,8 @@ bool RoutingManager::OnLinkPrefix::IsDeprecated(void) const {
 
 TimeMilli RoutingManager::OnLinkPrefix::GetDeprecationTime(void) const
 {
+    LogInfo("mLastUpdateTime %d, mPreferredLifetime: %d, mValidLifetime: %d, mStaleTimeCalculated: %d, mDisregard:%d", mLastUpdateTime, mPreferredLifetime, mValidLifetime,mStaleTimeCalculated, mDisregard);
+
     return CalculateExpirationTime(mPreferredLifetime);
 }
 
@@ -1226,6 +1227,8 @@ void RoutingManager::MultiAilDetector::Evaluate(void)
 
     detected = (mNetDataPeerBrCount > mRxRaTrackerReachablePeerBrCount);
 
+    LogInfo("MultiAilDetector: detected: %d, mDetected: %d", detected, mDetected);
+    
     if (detected == mDetected)
     {
         mTimer.Stop();
@@ -1233,6 +1236,7 @@ void RoutingManager::MultiAilDetector::Evaluate(void)
     else if (!mTimer.IsRunning())
     {
         mTimer.Start(detected ? kDetectTime : kClearTime);
+        LogInfo("MultiAilDetector start  timer for %d", detected ? kDetectTime : kClearTime);
     }
 
 exit:
@@ -1675,6 +1679,7 @@ void RoutingManager::RxRaTracker::HandleLocalOnLinkPrefixChanged(void)
 
     VerifyOrExit(didChange);
 
+    LogInfo("Call Evaluate() in %s", __func__);
     Evaluate();
 
 exit:
@@ -1712,6 +1717,8 @@ void RoutingManager::RxRaTracker::HandleNetDataChange(void)
 
     if (didChange)
     {
+        LogInfo("Call Evaluate() in %s", __func__);
+
         Evaluate();
     }
 }
@@ -1753,6 +1760,8 @@ void RoutingManager::RxRaTracker::RemoveOrDeprecateOldEntries(TimeMilli aTimeThr
         mLocalRaHeader.Clear();
     }
 
+    LogInfo("Call Evaluate() in %s", __func__);
+
     Evaluate();
 }
 
@@ -1764,6 +1773,8 @@ void RoutingManager::RxRaTracker::Evaluate(void)
     NextFireTime    entryExpireTime(now);
     NextFireTime    staleTime(now);
     NextFireTime    rdnsssAddrExpireTime(now);
+    uint16_t routerCount = 0;
+    LogInfo("old: mHasNonUlaRoute: %d, mHasNonUlaOnLink: %d, mHasUlaOnLink%d, mHeaderManagedAddressConfigFlag: %d, mHeaderOtherConfigFlag: %d", oldFactors.mHasNonUlaRoute, oldFactors.mHasNonUlaOnLink, oldFactors.mHasUlaOnLink, oldFactors.mHeaderManagedAddressConfigFlag,oldFactors.mHeaderOtherConfigFlag);
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Remove expired entries associated with each router
@@ -1779,7 +1790,12 @@ void RoutingManager::RxRaTracker::Evaluate(void)
         {
             mRdnssAddrTask.Post();
         }
+        routerCount++;
+        LogInfo("Router address:%s", router.mAddress.ToString().AsCString());
+
     }
+    LogInfo("Router count before remove:  %d", routerCount);
+    routerCount = 0;
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Remove any router entry that no longer has any valid on-link
@@ -1798,9 +1814,11 @@ void RoutingManager::RxRaTracker::Evaluate(void)
         router.mAllEntriesDisregarded = true;
 
         mDecisionFactors.UpdateFlagsFrom(router);
+        LogInfo("Router address:%s", router.mAddress.ToString().AsCString());
 
         for (OnLinkPrefix &entry : router.mOnLinkPrefixes)
         {
+            LogInfo("onlink prefix:%s", entry.GetPrefix().ToString().AsCString());
             mDecisionFactors.UpdateFrom(entry);
             entry.SetStaleTimeCalculated(false);
 
@@ -1814,15 +1832,17 @@ void RoutingManager::RxRaTracker::Evaluate(void)
 
             router.mAllEntriesDisregarded &= entry.ShouldDisregard();
         }
+        routerCount++;
     }
+
+    LogInfo("Router count after remove:  %d", routerCount);
+
+    LogInfo("now: mHasNonUlaRoute: %d, mHasNonUlaOnLink: %d, mHasUlaOnLink%d, mHeaderManagedAddressConfigFlag: %d, mHeaderOtherConfigFlag: %d", mDecisionFactors.mHasNonUlaRoute, mDecisionFactors.mHasNonUlaOnLink, mDecisionFactors.mHasUlaOnLink, mDecisionFactors.mHeaderManagedAddressConfigFlag,mDecisionFactors.mHeaderOtherConfigFlag);
 
     if (oldFactors != mDecisionFactors)
     {
         mSignalTask.Post();
-        LogInfo("old: mHasNonUlaRoute: %d, mHasNonUlaOnLink: %d, mHasUlaOnLink%d, mHeaderManagedAddressConfigFlag: %d, mHeaderOtherConfigFlag: %d", oldFactors.mHasNonUlaRoute, oldFactors.mHasNonUlaOnLink, oldFactors.mHasUlaOnLink, oldFactors.mHeaderManagedAddressConfigFlag,oldFactors.mHeaderOtherConfigFlag);
-
-        LogInfo("now: mHasNonUlaRoute: %d, mHasNonUlaOnLink: %d, mHasUlaOnLink%d, mHeaderManagedAddressConfigFlag: %d, mHeaderOtherConfigFlag: %d", mDecisionFactors.mHasNonUlaRoute, mDecisionFactors.mHasNonUlaOnLink, mDecisionFactors.mHasUlaOnLink, mDecisionFactors.mHeaderManagedAddressConfigFlag,mDecisionFactors.mHeaderOtherConfigFlag);
-
+        LogInfo("oldFactors != mDecisionFactors, mSignalTask.Post()");
     }
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2029,11 +2049,16 @@ void RoutingManager::RxRaTracker::HandleRouterTimer(void)
             {
                 entry.ClearLifetime();
             }
-/*
+
 #if OPENTHREAD_CONFIG_BORDER_ROUTING_MULTI_AIL_DETECTION_ENABLE
-            Get<RoutingManager>().mMultiAilDetector.Evaluate();
+            if (router.IsPeerBr())
+            {
+              mSignalTask.Post();
+              LogInfo("when unreachable is newly discovered, mSignalTask.Post()");
+
+            }
 #endif
-*/
+
         }
     }
 
@@ -2462,14 +2487,18 @@ exit:
 
 void RoutingManager::RxRaTracker::DecisionFactors::UpdateFrom(const OnLinkPrefix &aOnLinkPrefix)
 {
+    LogInfo("ShouldDisregard: %d",aOnLinkPrefix.ShouldDisregard());
+
     VerifyOrExit(!aOnLinkPrefix.ShouldDisregard());
 
     if (aOnLinkPrefix.GetPrefix().IsUniqueLocal())
     {
+        LogInfo("mHasUlaOnLink True");
         mHasUlaOnLink = true;
     }
     else
     {
+        LogInfo("mHasNonUlaOnLink True");
         mHasNonUlaOnLink = true;
     }
 
