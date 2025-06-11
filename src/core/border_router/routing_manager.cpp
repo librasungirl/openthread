@@ -936,6 +936,7 @@ TimeMilli RoutingManager::LifetimedPrefix::CalculateExpirationTime(uint32_t aLif
 {
     // `aLifetime` is in unit of seconds. This method ensures
     // that the time calculation fits with `TimeMilli` range.
+    LogInfo("mLastUpdateTime %d, Lifetime: %d", mLastUpdateTime, aLifetime);
 
     return RoutingManager::CalculateExpirationTime(mLastUpdateTime, aLifetime);
 }
@@ -959,7 +960,9 @@ void RoutingManager::OnLinkPrefix::SetFrom(const PrefixTableEntry &aPrefixTableE
     mLastUpdateTime    = TimerMilli::GetNow();
 }
 
-bool RoutingManager::OnLinkPrefix::IsDeprecated(void) const { return GetDeprecationTime() <= TimerMilli::GetNow(); }
+bool RoutingManager::OnLinkPrefix::IsDeprecated(void) const { 
+    LogInfo("TimerMilli::GetNow(): %d", TimerMilli::GetNow());
+    return GetDeprecationTime() <= TimerMilli::GetNow(); }
 
 TimeMilli RoutingManager::OnLinkPrefix::GetDeprecationTime(void) const
 {
@@ -1816,6 +1819,10 @@ void RoutingManager::RxRaTracker::Evaluate(void)
     if (oldFactors != mDecisionFactors)
     {
         mSignalTask.Post();
+        LogInfo("old: mHasNonUlaRoute: %d, mHasNonUlaOnLink: %d, mHasUlaOnLink%d, mHeaderManagedAddressConfigFlag: %d, mHeaderOtherConfigFlag: %d", oldFactors.mHasNonUlaRoute, oldFactors.mHasNonUlaOnLink, oldFactors.mHasUlaOnLink, oldFactors.mHeaderManagedAddressConfigFlag,oldFactors.mHeaderOtherConfigFlag);
+
+        LogInfo("now: mHasNonUlaRoute: %d, mHasNonUlaOnLink: %d, mHasUlaOnLink%d, mHeaderManagedAddressConfigFlag: %d, mHeaderOtherConfigFlag: %d", mDecisionFactors.mHasNonUlaRoute, mDecisionFactors.mHasNonUlaOnLink, mDecisionFactors.mHasUlaOnLink, mDecisionFactors.mHeaderManagedAddressConfigFlag,mDecisionFactors.mHeaderOtherConfigFlag);
+
     }
 
     //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2022,10 +2029,11 @@ void RoutingManager::RxRaTracker::HandleRouterTimer(void)
             {
                 entry.ClearLifetime();
             }
-
+/*
 #if OPENTHREAD_CONFIG_BORDER_ROUTING_MULTI_AIL_DETECTION_ENABLE
             Get<RoutingManager>().mMultiAilDetector.Evaluate();
 #endif
+*/
         }
     }
 
