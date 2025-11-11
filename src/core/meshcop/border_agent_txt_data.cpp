@@ -199,6 +199,23 @@ void TxtData::SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLeng
     VerifyOrExit(!mVendorData.Matches(aVendorData, aVendorDataLength));
 
     SuccessOrAssert(mVendorData.SetFrom(aVendorData, aVendorDataLength));
+
+#if OPENTHREAD_CONFIG_BORDER_AGENT_TXT_DATA_PARSER_ENABLE
+    {
+        TxtData::Info txtInfo;
+        txtInfo.ParseFrom(aVendorData, aVendorDataLength);
+
+        if (txtInfo.mHasVendorName)
+        {
+            Get<NetworkDiagnostic::Server>().SetVendorName(txtInfo.mVendorName);
+        }
+
+        if (txtInfo.mHasModelName)
+        {
+            Get<NetworkDiagnostic::Server>().SetVendorModel(txtInfo.mModelName);
+        }
+    }
+#endif
     Refresh();
 
 exit:
