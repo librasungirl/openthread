@@ -202,17 +202,34 @@ void TxtData::SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLeng
 
 #if OPENTHREAD_CONFIG_BORDER_AGENT_TXT_DATA_PARSER_ENABLE
     {
-        TxtData::Info txtInfo;
+        TxtData::Info                  txtInfo;
+        String<kBaseServiceNameMaxLen> baseName;
+        bool                           runtimeUpdate = false;
+
         txtInfo.ParseFrom(aVendorData, aVendorDataLength);
 
         if (txtInfo.mHasVendorName)
         {
             Get<NetworkDiagnostic::Server>().SetVendorName(txtInfo.mVendorName);
+            baseName.Append("%s", txtInfo.mVendorName);
+            runtimeUpdate = true;
         }
 
         if (txtInfo.mHasModelName)
         {
             Get<NetworkDiagnostic::Server>().SetVendorModel(txtInfo.mModelName);
+            baseName.Append(" %s", txtInfo.mModelName);
+            runtimeUpdate = true;
+        }
+
+        if (txtInfo.mHasAgentId)
+        {
+            Get<MeshCoP::BorderAgent::Manager>().SetId(txtInfo.mAgentId);
+        }
+
+        if (runtimeUpdate)
+        {
+            Get<MeshCoP::BorderAgent::Manager>().SetServiceBaseName(baseName.AsCString());
         }
     }
 #endif
