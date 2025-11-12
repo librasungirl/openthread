@@ -411,12 +411,6 @@ void Manager::RegisterService(void)
 
     SuccessOrAssert(Get<TxtData>().Prepare(txtDataBuffer, txtDataBufferSize, txtDataLength));
 
-    if (vendorDataLength != 0)
-    {
-        Get<TxtData>().GetVendorData().CopyBytesTo(txtDataBuffer + txtDataLength);
-        txtDataLength += vendorDataLength;
-    }
-
     service.Clear();
     service.mServiceInstance = GetServiceName();
     service.mServiceType     = kServiceType;

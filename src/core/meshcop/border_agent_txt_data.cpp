@@ -154,6 +154,12 @@ Error TxtData::Prepare(uint8_t *aBuffer, uint16_t aBufferSize, uint16_t &aLength
 
     aLength = encoder.GetLength();
 
+    if (vendorDataLength != 0)
+    {
+        Get<TxtData>().GetVendorData().CopyBytesTo(aBuffer + aLength);
+        aLength += Get<TxtData>().GetVendorData().GetLength();
+    }
+
 exit:
     return error;
 }
