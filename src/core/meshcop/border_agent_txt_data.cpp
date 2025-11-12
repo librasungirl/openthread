@@ -192,7 +192,7 @@ exit:
     return;
 }
 
-#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
+// #if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
 
 void TxtData::SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLength)
 {
@@ -202,9 +202,9 @@ void TxtData::SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLeng
 
 #if OPENTHREAD_CONFIG_BORDER_AGENT_TXT_DATA_PARSER_ENABLE
     {
-        TxtData::Info                  txtInfo;
-        String<kBaseServiceNameMaxLen> baseName;
-        bool                           runtimeUpdate = false;
+        TxtData::Info                                                txtInfo;
+        String<OT_BORDER_AGENT_MESHCOP_SERVICE_BASE_NAME_MAX_LENGTH> baseName;
+        bool                                                         runtimeUpdate = false;
 
         txtInfo.ParseFrom(aVendorData, aVendorDataLength);
 
@@ -224,7 +224,7 @@ void TxtData::SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLeng
 
         if (txtInfo.mHasAgentId)
         {
-            Get<MeshCoP::BorderAgent::Manager>().SetId(txtInfo.mAgentId);
+            Get<MeshCoP::BorderAgent::Manager>().SetId(static_cast<const MeshCoP::BorderAgent::Id &>(txtInfo.mAgentId));
         }
 
         if (runtimeUpdate)
@@ -239,7 +239,7 @@ exit:
     return;
 }
 
-#endif
+// #endif
 
 uint32_t TxtData::StateBitmap::Determine(Instance &aInstance)
 {

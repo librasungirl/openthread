@@ -201,7 +201,6 @@ public:
      */
     void Refresh(void) { mChangedTask.Post(); }
 
-#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
     /**
      * Returns the vendor TXT data.
      *
@@ -229,8 +228,6 @@ public:
      * @param[in] aVendorDataLength  The length of @p aVendorData in bytes.
      */
     void SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLength);
-
-#endif // OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
 
 #endif // OPENTHREAD_CONFIG_BORDER_AGENT_ENABLE
 

@@ -64,12 +64,12 @@ otError otBorderAgentSetMeshCoPServiceBaseName(otInstance *aInstance, const char
 
     return AsCoreType(aInstance).Get<MeshCoP::BorderAgent::Manager>().SetServiceBaseName(aBaseName);
 }
+#endif
 
 void otBorderAgentSetVendorTxtData(otInstance *aInstance, const uint8_t *aVendorData, uint16_t aVendorDataLength)
 {
     AsCoreType(aInstance).Get<MeshCoP::BorderAgent::TxtData>().SetVendorData(aVendorData, aVendorDataLength);
 }
-#endif
 
 #if OPENTHREAD_CONFIG_BORDER_AGENT_ID_ENABLE
 otError otBorderAgentGetId(otInstance *aInstance, otBorderAgentId *aId)
