@@ -312,9 +312,7 @@ private:
 
     Callback<ChangedCallback> mChangedCallback;
     ChangedTask               mChangedTask;
-#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
-    Heap::Data mVendorData;
-#endif
+    Heap::Data                mVendorData;
 #endif
 };
 

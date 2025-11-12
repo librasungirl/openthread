@@ -202,35 +202,45 @@ void TxtData::SetVendorData(const uint8_t *aVendorData, uint16_t aVendorDataLeng
 
 #if OPENTHREAD_CONFIG_BORDER_AGENT_TXT_DATA_PARSER_ENABLE
     {
-        TxtData::Info                                                txtInfo;
+        TxtData::Info txtInfo;
+#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
         String<OT_BORDER_AGENT_MESHCOP_SERVICE_BASE_NAME_MAX_LENGTH> baseName;
         bool                                                         runtimeUpdate = false;
+#endif
 
         txtInfo.ParseFrom(aVendorData, aVendorDataLength);
 
         if (txtInfo.mHasVendorName)
         {
             Get<NetworkDiagnostic::Server>().SetVendorName(txtInfo.mVendorName);
+#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
+
             baseName.Append("%s", txtInfo.mVendorName);
             runtimeUpdate = true;
+#endif
         }
 
         if (txtInfo.mHasModelName)
         {
             Get<NetworkDiagnostic::Server>().SetVendorModel(txtInfo.mModelName);
+#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
+
             baseName.Append(" %s", txtInfo.mModelName);
             runtimeUpdate = true;
+#endif
         }
 
         if (txtInfo.mHasAgentId)
         {
             Get<MeshCoP::BorderAgent::Manager>().SetId(static_cast<const MeshCoP::BorderAgent::Id &>(txtInfo.mAgentId));
         }
+#if OPENTHREAD_CONFIG_BORDER_AGENT_MESHCOP_SERVICE_ENABLE
 
         if (runtimeUpdate)
         {
             Get<MeshCoP::BorderAgent::Manager>().SetServiceBaseName(baseName.AsCString());
         }
+#endif
     }
 #endif
     Refresh();
