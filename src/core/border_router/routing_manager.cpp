@@ -872,6 +872,11 @@ void RoutingManager::OmrPrefixManager::UpdateLocalPrefix(void)
             if (Get<RxRaTracker>().IsAddressOnLink(AsCoreType(&pdPrefix.mPrefix)))
             {
                 LogInfo("PD prefix %s is on-link, ignoring it for OMR", pdPrefix.ToString().AsCString());
+
+                // Note that besides handling it by just ignoring the prefix, here we also stop PD as there
+                // might be some misconfiguration or IPv6 implementation issue on the upstream router.
+                // Such issue is likely persistent unless it is fixed or replaced, so it is useless to continue.
+                Get<RoutingManager>().SetDhcp6PdEnabled(false);
             }
             else
             {
