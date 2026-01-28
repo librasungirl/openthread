@@ -867,17 +867,26 @@ void RoutingManager::OmrPrefixManager::UpdateLocalPrefix(void)
 #if OPENTHREAD_CONFIG_BORDER_ROUTING_DHCP6_PD_ENABLE
         if (Get<RoutingManager>().mPdPrefixManager.HasPrefix())
         {
-            if (mLocalPrefix.GetPrefix() != Get<RoutingManager>().mPdPrefixManager.GetPrefix())
+            const Ip6::Prefix &pdPrefix = Get<RoutingManager>().mPdPrefixManager.GetPrefix();
+
+            if (Get<RxRaTracker>().IsAddressOnLink(AsCoreType(&pdPrefix.mPrefix)))
             {
-                RemoveLocalFromNetData();
-                mLocalPrefix.SetPrefix(Get<RoutingManager>().mPdPrefixManager.GetPrefix(),
-                                       PdPrefixManager::kPdRoutePreference);
-                LogInfo("Setting local OMR prefix to PD prefix: %s", mLocalPrefix.GetPrefix().ToString().AsCString());
+                LogInfo("PD prefix %s is on-link, ignoring it for OMR", pdPrefix.ToString().AsCString());
+            }
+            else
+            {
+                if (mLocalPrefix.GetPrefix() != pdPrefix)
+                {
+                    RemoveLocalFromNetData();
+                    mLocalPrefix.SetPrefix(pdPrefix, PdPrefixManager::kPdRoutePreference);
+                    LogInfo("Setting local OMR prefix to PD prefix: %s", mLocalPrefix.GetPrefix().ToString().AsCString());
+                }
+
+                break;
             }
         }
-        else
 #endif
-            if (mLocalPrefix.GetPrefix() != mGeneratedPrefix)
+        if (mLocalPrefix.GetPrefix() != mGeneratedPrefix)
         {
             RemoveLocalFromNetData();
             mLocalPrefix.SetPrefix(mGeneratedPrefix, RoutePreference::kRoutePreferenceLow);
